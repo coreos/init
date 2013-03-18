@@ -1,0 +1,11 @@
+[Unit]
+Description=Start CoreOS essentials
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/coreos_startup
+StandardOutput=journal+console
+
+[Install]
+WantedBy=basic.target

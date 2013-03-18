@@ -1,0 +1,159 @@
+#!/bin/sh
+
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+UNDO_MOUNTS=
+cleanup_mounts()
+{
+  # On failure unmount all saved mount points and repair stateful
+  for mount_point in ${UNDO_MOUNTS}; do
+    umount -n ${mount_point}
+  done
+  echo "ERROR: cleaning up mounts $UNDO_MOUNTS"
+}
+remember_mount()
+{
+    UNDO_MOUNTS="$1 ${UNDO_MOUNTS}"
+}
+mount_or_fail()
+{
+  local mount_point
+  if mount "$@" ; then
+    # Last parameter contains the mount point
+    shift $(( $# - 1 ))
+    # Push it on the undo stack if we fail later
+    remember_mount "$1"
+    return
+  fi
+  cleanup_mounts
+}
+mount_stateful()
+{
+  # In the containers we just lay down the files into
+  # /mnt/stateful_partition
+  if [ $(systemd-detect-virt) = "systemd-nspawn" ]; then 
+    return 0
+  fi
+
+  # Prepare to mount stateful partition
+  ROOT_DEV=$(rootdev -s)
+  ROOTDEV_RET_CODE=$?
+  ROOTDEV_TYPE=${ROOT_DEV%[0-9]*}
+  # Check if we are booted on physical media. rootdev will fail if we are in
+  # an initramfs or tmpfs rootfs (used for x86 factory images). When using
+  # initrd+tftpboot (used for ARM factory images), ROOTDEV_TYPE will be
+  # /dev/ram.
+  if [ "$ROOTDEV_RET_CODE" = "0" -a "$ROOTDEV_TYPE" != "/dev/ram" ]; then
+    # Find our stateful partition. It's always partition 1.
+    STATE_DEV=${ROOTDEV_TYPE}1
+    if ! mount -n -t ext4 -o nodev,noexec,nosuid,commit=600 \
+           "$STATE_DEV" /mnt/stateful_partition; then
+      echo "ERROR: could not mount $STATE_DEV"
+    fi
+  fi
+}
+
+
+# Sanity check the date (crosbug.com/13200)
+if [ $(date +%Y) -lt 1970 ]; then
+  date 010200001970.00
+fi
+
+mount_stateful
+
+# Make sure unencrypted stateful partition has the needed directories.
+for d in home home/core home/core/user home/root home/user; do
+  mkdir -p -m 0755 /mnt/stateful_partition/$d
+done
+
+# Mount /home.  This mount inherits nodev,noexec,nosuid from
+# /mnt/stateful_partition above.
+mount_or_fail -n --bind /mnt/stateful_partition/home /home
+
+# Create, possibly migrate from, the unencrypted stateful partition,
+# and bind mount the /var and /home/core mounts from the encrypted
+# filesystem /mnt/stateful_partition/encrypted, all managed by the
+# "mount-encrypted" helper.
+# Since /var is managed by mount-encrypted, it should not be created
+# in the unencrypted stateful partition. Its mount point in the root
+# filesystem exists already from the rootfs image.
+# Since /home is still mounted from the unencrypted stateful partition,
+# having /home/core already doesn't matter. It will be created by
+# mount-encrypted if it is missing.
+# These mounts inherit nodev,noexec,nosuid from the encrypted filesystem
+# /mnt/stateful_partition/encrypted.
+remember_mount /var
+remember_mount /home/core
+
+# Make sure required /var subdirectories exist.
+mkdir -p -m 0755 /var/cache /var/db /var/empty /var/lib/ureadahead \
+                 /var/log/metrics /var/tmp
+
+# /var/tmp must be world-writable and sticky
+chmod 1777 /var/tmp
+# /home/root must be group-writable and sticky
+chmod 1771 /home/root
+# Selected directories must belong to the core user.
+chown core:core /home/core /var/log/metrics
+# rsyslog needs to be able to create new logfiles, but not delete other logs
+chgrp syslog /var/log
+chmod 1775 /var/log
+
+mount -n -t tmpfs -o nodev,noexec,nosuid media /media
+
+# CROS_DEBUG equals one if we've booted in developer mode or we've booted a
+# developer image.
+crossystem "cros_debug?1"
+CROS_DEBUG=$((! $?))
+
+# Mount stateful partition for dev packages
+# TODO(arkaitzr@chromium.org) - Only use CROS_DEBUG when cros_debug is
+# correctly set in a test VM after updating itself to itself (that is, it does
+# not fail cros_au_test_harness).
+if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
+  # Capture a snapshot of "normal" mount state here, for auditability,
+  # before we start applying devmode-specific changes.
+  cat /proc/mounts > /var/log/mount_options.log
+  # Create dev_image directory in base images in developer mode.
+  if [ ! -d /mnt/stateful_partition/dev_image ]; then
+    mkdir -p -m 0755 /mnt/stateful_partition/dev_image
+  fi
+  # Mount and then remount to enable exec/suid.
+  mount_or_fail -n --bind /mnt/stateful_partition/dev_image /usr/local
+  mount -n -o remount,exec,suid /usr/local
+
+  # Set up /var elements needed by gmerge.
+  # TODO(keescook) Use dev/test package installs instead of piling more
+  # things here (crosbug.com/14091).
+  BASE=/mnt/stateful_partition/var_overlay
+  if [ -d ${BASE} ]; then
+    # Keep this list in sync with the var_overlay elements in the DIRLIST
+    # found in chromeos-install from chromeos-base/chromeos-installer.
+    DIRLIST="
+      db/pkg
+      lib/portage
+    "
+    for DIR in ${DIRLIST}; do
+      if [ ! -d ${BASE}/${DIR} ]; then
+        continue
+      fi
+      DEST=/var/${DIR}
+      if [ -e ${DEST} ]; then
+        continue
+      fi
+      PARENT=$(dirname ${DEST})
+      mkdir -p ${PARENT}
+      ln -sf ${BASE}/${DIR} ${DEST}
+    done
+  fi
+fi
+
+# Enable crash reporting for all future exec'd processes, even those that have
+# gone through setuid.
+echo 2 > /proc/sys/fs/suid_dumpable
+
+# Always return success to avoid killing init
+exit 0
