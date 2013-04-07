@@ -153,6 +153,7 @@ if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
     DIRLIST="
       db/pkg
       lib/portage
+      lib/docker
     "
     for DIR in ${DIRLIST}; do
       if [ ! -d ${BASE}/${DIR} ]; then
