@@ -66,7 +66,7 @@ mount_stateful()
   if [ "$ROOTDEV_RET_CODE" = "0" -a "$ROOTDEV_TYPE" != "/dev/ram" ]; then
     # Find our stateful partition. It's always partition 1.
     STATE_DEV=${ROOTDEV_TYPE}1
-    if ! mount -n -t ext4 -o nodev,noexec,nosuid,commit=600 \
+    if ! mount -n -t ext4 -o commit=600 \
            "$STATE_DEV" /mnt/stateful_partition; then
       echo "ERROR: could not mount $STATE_DEV"
     fi
