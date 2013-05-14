@@ -64,10 +64,7 @@ mount_stateful()
   # initrd+tftpboot (used for ARM factory images), ROOTDEV_TYPE will be
   # /dev/ram.
   if [ "$ROOTDEV_RET_CODE" = "0" -a "$ROOTDEV_TYPE" != "/dev/ram" ]; then
-    # Find our stateful partition. It's always partition 1.
-    STATE_DEV=${ROOTDEV_TYPE}1
-    if ! mount -n -t ext4 -o commit=600 \
-           "$STATE_DEV" /mnt/stateful_partition; then
+    if ! mount -L STATE -n -t ext4 -o commit=600 /mnt/stateful_partition; then
       echo "ERROR: could not mount $STATE_DEV"
     fi
   fi
