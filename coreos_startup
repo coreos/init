@@ -68,6 +68,11 @@ mount_stateful()
       echo "ERROR: could not mount $STATE_DEV"
     fi
   fi
+
+  # mount the OEM partition into /usr/share/oem. A failure is not fatal
+  # as we may not have an OEM filesystem in all cases.
+  mount -L OEM -n -t ext4 -o nodev,noexec,nosuid,commit=600,ro \
+    /usr/share/oem
 }
 
 
