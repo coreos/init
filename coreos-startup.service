@@ -2,6 +2,7 @@
 Description=Start CoreOS essentials
 # Docker can't start without the stateful partition block docker until mounted
 Before=docker.service
+Before=systemd-rest.service
 
 [Service]
 Type=oneshot

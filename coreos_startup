@@ -156,6 +156,8 @@ if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
       db/pkg
       lib/portage
       lib/docker
+      lib/containers
+      lib/systemd-rest
     "
     for DIR in ${DIRLIST}; do
       if [ ! -d ${BASE}/${DIR} ]; then
