@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if [ ! -b "$1" ]; then
+    echo "$1 is not a block device" >&2
+    exit 1
+fi
+
+STATE_DEV=$(readlink -f "$1")
+STATE_PART="${STATE_DEV##*[^0-9]}"
+DISK_DEV="${STATE_DEV%[0-9]*}"
+
+if sgdisk -v "$DISK_DEV" | grep -q "^Problem: The secondary header"; then
+    echo "Extending STATE partition..." >&2
+
+    # No resize operation so copy unknown partition properties.
+    info=$(sgdisk --info=$STATE_PART "$DISK_DEV")
+    guid=$(echo "$info" | awk '/^Partition unique GUID:/{print $4}')
+    start=$(echo "$info" | awk '/^First sector:/{print $3}')
+    if [ -z "$guid" -o -z "$start" ]; then
+        echo "Resize failed: unable to parse sgdisk output" >&2
+        exit 1
+    fi
+
+    # No turning back now!
+    if ! sgdisk --move-second-header \
+            --delete=$STATE_PART \
+            --new=$STATE_PART:$start:0 \
+            --partition-guid=$STATE_PART:$guid \
+            --typecode=$STATE_PART:0x0700 \
+            --change-name=$STATE_PART:STATE \
+            "$DISK_DEV"; then
+        echo "Resize failed: error updating GPT" >&2
+        exit 1
+    fi
+
+    # sgdisk only can trigger a full-disk reload which fails while the
+    # root filesystem is mounted. partprobe from parted is fancier.
+    partprobe "$DISK_DEV"
+
+    e2fsck -p -f "$STATE_DEV"
+    if [ "$?" != 0 -a "$?" != 1 ]; then
+        echo "Resize failed: error during fsck" >&2
+        exit 1
+    fi
+    if ! resize2fs "$STATE_DEV"; then
+        echo "Resize failed: error during resize2fs" >&2
+        exit 1
+    fi
+fi

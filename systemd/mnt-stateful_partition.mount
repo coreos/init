@@ -1,0 +1,16 @@
+[Unit]
+DefaultDependencies=no
+Wants=local-fs-pre.target
+After=local-fs-pre.target
+Wants=resize-stateful_partition.service
+After=resize-stateful_partition.service
+Conflicts=umount.target
+Before=umount.target
+Before=local-fs.target
+
+[Mount]
+What=/dev/disk/by-label/STATE
+Where=/mnt/stateful_partition
+Options=commit=600,data=ordered
+Type=ext4
+FsckPassNo=0
