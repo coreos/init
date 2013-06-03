@@ -10,7 +10,7 @@ After=local-fs.target
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/sbin/coreos_startup
+ExecStart=/usr/lib/coreos/coreos_startup
 StandardOutput=journal+console
 
 [Install]
