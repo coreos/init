@@ -1,0 +1,13 @@
+[Unit]
+Description=Expand STATE partition
+DefaultDependencies=no
+Requires=dev-disk-by\x2dlabel-STATE.device
+After=dev-disk-by\x2dlabel-STATE.device
+Wants=local-fs-pre.target
+Before=local-fs-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/lib/coreos/resize_stateful_partition /dev/disk/by-label/STATE
+StandardOutput=journal+console

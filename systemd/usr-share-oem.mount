@@ -1,0 +1,14 @@
+[Unit]
+DefaultDependencies=no
+After=local-fs-pre.target
+Wants=local-fs-pre.target
+Conflicts=umount.target
+Before=umount.target
+Before=local-fs.target
+
+[Mount]
+What=/dev/disk/by-label/OEM
+Where=/usr/share/oem
+Options=nodev,noexec,nosuid,commit=600,ro
+Type=ext4
+FsckPassNo=0

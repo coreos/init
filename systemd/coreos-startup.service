@@ -1,8 +1,11 @@
 [Unit]
 Description=Start CoreOS essentials
+Wants=mnt-stateful_partition.mount
+Wants=usr-share-oem.mount
 # Docker can't start without the stateful partition block docker until mounted
 Before=docker.service
 Before=systemd-rest.service
+After=local-fs.target
 
 [Service]
 Type=oneshot
