@@ -18,8 +18,8 @@ if sgdisk -v "$DISK_DEV" | grep -q "^Problem: The secondary header"; then
 
     # No resize operation so copy unknown partition properties.
     info=$(sgdisk --info=$STATE_PART "$DISK_DEV")
-    guid=$(echo "$info" | mawk '/^Partition unique GUID:/{print $4}')
-    start=$(echo "$info" | mawk '/^First sector:/{print $3}')
+    guid=$(echo "$info" | awk '/^Partition unique GUID:/{print $4}')
+    start=$(echo "$info" | awk '/^First sector:/{print $3}')
     if [ -z "$guid" -o -z "$start" ]; then
         echo "Resize failed: unable to parse sgdisk output" >&2
         exit 1
