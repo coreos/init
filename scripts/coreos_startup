@@ -18,23 +18,6 @@ remember_mount()
 {
     UNDO_MOUNTS="$1 ${UNDO_MOUNTS}"
 }
-setup_ssh()
-{
-  SSH_DIR=/mnt/stateful_partition/etc/ssh
-  mkdir -p ${SSH_DIR}
-
-  if ! sshd -t > /dev/null ; then
-    # sshd will not start with current config, generate a new set of keys.
-    for KEY_TYPE in rsa dsa ; do
-      KEY_FILE=${SSH_DIR}/ssh_host_${KEY_TYPE}_key
-      # If keys exist delete them because they are not valid and ssh-keygen
-      # will not overwrite them.
-      rm -f ${KEY_FILE} ${KEY_FILE}.pub
-      ssh-keygen -q -f ${KEY_FILE} -N '' -t ${KEY_TYPE} ||
-        echo "Failed to generate ssh key."
-    done
-  fi
-}
 mount_or_fail()
 {
   local mount_point
@@ -53,8 +36,6 @@ mount_or_fail()
 if [ $(date +%Y) -lt 1970 ]; then
   date 010200001970.00
 fi
-
-setup_ssh
 
 # Make sure unencrypted stateful partition has the needed directories.
 for d in home home/core home/core/user home/root home/user; do

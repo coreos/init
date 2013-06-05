@@ -1,0 +1,16 @@
+[Unit]
+Description=Generate sshd host keys
+DefaultDependencies=no
+Before=sshd.service
+Before=sshd.socket
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/lib/coreos/sshd_keygen
+StandardOutput=journal+console
+
+[Install]
+WantedBy=sshd.service
+WantedBy=sshd.socket
