@@ -1,0 +1,12 @@
+[Unit]
+Description=Developer Mode
+DefaultDependencies=no
+Requires=mnt-stateful_partition.mount
+After=mnt-stateful_partition.mount
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/lib/coreos/dev_mode
+StandardOutput=journal+console

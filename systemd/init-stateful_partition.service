@@ -1,0 +1,14 @@
+# This simply makes sure that /home, /var, and /var/run can be bind mounted
+[Unit]
+Description=Initialize STATE partition
+DefaultDependencies=no
+Requires=mnt-stateful_partition.mount
+After=mnt-stateful_partition.mount
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/bin/mkdir -p /mnt/stateful_partition/home \
+                        /mnt/stateful_partition/var_overlay/run
+StandardOutput=journal+console

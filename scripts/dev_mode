@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Copyright (c) 2012 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# CROS_DEBUG equals one if we've booted in developer mode or we've booted a
+# developer image.
+crossystem "cros_debug?1"
+CROS_DEBUG=$((! $?))
+
+# Mount stateful partition for dev packages
+# TODO(arkaitzr@chromium.org) - Only use CROS_DEBUG when cros_debug is
+# correctly set in a test VM after updating itself to itself (that is, it does
+# not fail cros_au_test_harness).
+if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
+  # Create dev_image directory in base images in developer mode.
+  if [ ! -d /mnt/stateful_partition/dev_image ]; then
+    mkdir -p -m 0755 /mnt/stateful_partition/dev_image
+  fi
+  # Mount and then remount to enable exec/suid.
+  mount -n --bind /mnt/stateful_partition/dev_image /usr/local
+  mount -n -o remount,exec,suid /usr/local
+  # Take a stab at mounting root read-write
+  mount -n -o remount,rw /
+fi
+
+# TODO(marineam): Move this to a sysctl file or delete
+# Enable crash reporting for all future exec'd processes, even those that have
+# gone through setuid.
+echo 2 > /proc/sys/fs/suid_dumpable
