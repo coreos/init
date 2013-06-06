@@ -1,0 +1,22 @@
+[Unit]
+Description=CoreOS essentials
+# Filesystems!
+Wants=resize-stateful_partition.service
+Wants=mnt-stateful_partition.mount
+Wants=init-stateful_partition.service
+Wants=usr-share-oem.mount
+Wants=home.mount
+Wants=var.mount
+Wants=var-run.mount
+Wants=dev-mode.service
+# TODO(marineam): Does anything actually need this?
+Wants=media.mount
+
+# Services!
+Wants=dhcpcd.service
+Wants=sshd-keygen.service
+Wants=sshd.socket
+Wants=update-engine.service
+
+[Install]
+WantedBy=multi-user.target

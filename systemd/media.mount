@@ -1,0 +1,11 @@
+[Unit]
+Description=External Media Directory
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=tmpfs
+Where=/media
+Type=tmpfs
+Options=nodev,noexec,nosuid

@@ -1,0 +1,11 @@
+[Unit]
+Requires=init-stateful_partition.service
+After=init-stateful_partition.service
+Conflicts=umount.target
+Before=local-fs.target umount.target
+
+[Mount]
+What=/mnt/stateful_partition/home
+Where=/home
+Type=bind
+Options=bind
