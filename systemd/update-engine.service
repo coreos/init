@@ -1,5 +1,6 @@
 [Unit]
 Description=Update Engine
+ConditionVirtualization=!container
 
 [Service]
 Type=dbus

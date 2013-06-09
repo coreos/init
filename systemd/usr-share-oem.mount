@@ -5,6 +5,7 @@ Wants=local-fs-pre.target
 Conflicts=umount.target
 Before=umount.target
 Before=local-fs.target
+ConditionVirtualization=!container
 
 [Mount]
 What=/dev/disk/by-label/OEM

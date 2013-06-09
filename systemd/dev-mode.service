@@ -4,6 +4,7 @@ DefaultDependencies=no
 Requires=mnt-stateful_partition.mount
 After=mnt-stateful_partition.mount
 Before=local-fs.target
+ConditionVirtualization=!container
 
 [Service]
 Type=oneshot
