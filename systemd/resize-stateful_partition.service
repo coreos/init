@@ -7,6 +7,7 @@ Requires=dev-disk-by\x2dlabel-STATE.device
 After=dev-disk-by\x2dlabel-STATE.device
 Wants=local-fs-pre.target
 Before=local-fs-pre.target
+ConditionVirtualization=!container
 
 [Service]
 Type=oneshot
