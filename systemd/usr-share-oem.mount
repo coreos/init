@@ -10,6 +10,6 @@ ConditionVirtualization=!container
 [Mount]
 What=/dev/disk/by-label/OEM
 Where=/usr/share/oem
-Options=nodev,noexec,nosuid,commit=600,ro
+Options=nodev,commit=600
 Type=ext4
 FsckPassNo=0
