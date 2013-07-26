@@ -1,0 +1,16 @@
+# This simply makes sure that /home, /var, and /var/run can be bind mounted
+[Unit]
+Description=Initialize STATE partition
+DefaultDependencies=no
+Requires=media-state.mount
+After=media-state.mount
+Before=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/bin/mkdir -p /media/state/overlays/home \
+                        /media/state/overlays/opt \
+                        /media/state/overlays/srv \
+                        /media/state/overlays/var/run
+StandardOutput=journal+console
