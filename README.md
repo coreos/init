@@ -22,16 +22,16 @@ Important Steps
 
 A few notes on things that must happen which are unique to Core OS.
 
-  * resize ``stateful_partition``: Support easy VM growth by checking
+  * resize ``state``: Support easy VM growth by checking
     if there is unused space at the end of the disk and expanding the
     filesystem to use it.
-  * mount ``/mnt/stateful_partition``: Anything that should persist
+  * mount ``/media/state``: Anything that should persist
     across boots *must* be in here bind mounted or linked here
     including ``/home`` and ``/var``.
-  * initialize ``/mnt/stateful_partition``: The state partition is
+  * initialize ``/media/state``: The state partition is
     created during build but we need to be sure that it has the
     directories we expect before trying to use it.
-  * bind mounts: Map things into ``/mnt/stateful_partition`` or
+  * bind mounts: Map things into ``/media/state`` or
     ``/run`` and so on as apropraite.
   * mount ``/usr/share/oem``: Provides extra vendor add-ons.
   * generate ssh keys: The stock sshd units do not handle this so
@@ -45,12 +45,12 @@ Ordering
 Dependencies between the units can be not so obvious to a human and our
 boot involves an unusually long sequence of actions:
 
-  1. ``resize-stateful_partition.service``
+  1. ``resize-state.service``
       Runs ``scripts/resize_stateful_partition``
   2. ``local-fs-pre.target``
-  3. ``mnt-stateful_partition.service`` and ``usr-share-oem.mount``
+  3. ``media-state.service`` and ``usr-share-oem.mount``
       Other things are likely being mounted around here too.
-  4. ``init-stateful_partition.service``
+  4. ``init-state.service``
       Create directories needed for home, var, and var-run.
   5. ``home.mount`` and ``var.mount``
       Almost a normal looking system now!

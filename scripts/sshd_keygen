@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-SSH_DIR=/mnt/stateful_partition/etc/ssh
+SSH_DIR=/media/state/etc/ssh
 mkdir -p ${SSH_DIR}
 
 if ! sshd -t &> /dev/null ; then

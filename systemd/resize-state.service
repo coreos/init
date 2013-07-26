@@ -12,5 +12,5 @@ ConditionVirtualization=!container
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/lib/coreos/resize_stateful_partition /dev/disk/by-label/STATE
+ExecStart=/usr/lib/coreos/resize_state /dev/disk/by-label/STATE
 StandardOutput=journal+console

@@ -5,7 +5,7 @@ Conflicts=umount.target
 Before=local-fs.target umount.target
 
 [Mount]
-What=/media/state/overlays/home
-Where=/home
+What=/media/state/overlays/opt
+Where=/opt
 Type=bind
 Options=bind

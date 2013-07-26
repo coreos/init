@@ -1,6 +1,6 @@
 [Unit]
-Requires=init-stateful_partition.service
-After=init-stateful_partition.service
+Requires=init-state.service
+After=init-state.service
 Conflicts=umount.target
 Before=local-fs.target umount.target
 # These units are installed with systemd
@@ -10,7 +10,7 @@ Wants=var-lock.mount
 Before=var-lock.mount
 
 [Mount]
-What=/mnt/stateful_partition/var_overlay
+What=/media/state/overlays/var
 Where=/var
 Type=bind
 Options=bind

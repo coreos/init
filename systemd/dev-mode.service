@@ -1,8 +1,8 @@
 [Unit]
 Description=Developer Mode
 DefaultDependencies=no
-Requires=mnt-stateful_partition.mount
-After=mnt-stateful_partition.mount
+Requires=media-state.mount
+After=media-state.mount
 Before=local-fs.target
 ConditionVirtualization=!container
 

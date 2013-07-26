@@ -16,11 +16,11 @@ CROS_DEBUG=$((! $?))
 # not fail cros_au_test_harness).
 if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
   # Create dev_image directory in base images in developer mode.
-  if [ ! -d /mnt/stateful_partition/dev_image ]; then
-    mkdir -p -m 0755 /mnt/stateful_partition/dev_image
+  if [ ! -d /media/state/images/dev ]; then
+    mkdir -p -m 0755 /media/state/images/dev
   fi
   # Mount and then remount to enable exec/suid.
-  mount -n --bind /mnt/stateful_partition/dev_image /usr/local
+  mount -n --bind /media/state/images/dev /usr/local
   mount -n -o remount,exec,suid /usr/local
   # Take a stab at mounting root read-write
   mount -n -o remount,rw /
