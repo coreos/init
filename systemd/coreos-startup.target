@@ -21,4 +21,4 @@ Wants=sshd.socket
 Wants=update-engine.service
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=basic.target
