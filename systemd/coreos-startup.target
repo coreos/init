@@ -14,10 +14,5 @@ Wants=dev-mode.service
 # TODO(marineam): Does anything actually need this?
 Wants=media.mount
 
-# Services!
-Wants=dhcpcd.service
-Wants=sshd-keygen.service
-Wants=sshd.socket
-
 [Install]
 WantedBy=basic.target
