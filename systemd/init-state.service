@@ -12,5 +12,6 @@ RemainAfterExit=no
 ExecStart=/bin/mkdir -p /media/state/overlays/home \
                         /media/state/overlays/opt \
                         /media/state/overlays/srv \
-                        /media/state/overlays/var/run
+                        /media/state/overlays/var/run \
+                        /media/state/units
 StandardOutput=journal+console
