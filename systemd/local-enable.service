@@ -1,0 +1,8 @@
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'systemctl enable --runtime /media/state/units/*'
+# Before and Requires does not start these newly installed units
+ExecStartPost=/bin/systemctl start local.target
+
+[Install]
+WantedBy=multi-user.target
