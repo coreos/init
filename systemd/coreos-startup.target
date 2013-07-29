@@ -18,7 +18,6 @@ Wants=media.mount
 Wants=dhcpcd.service
 Wants=sshd-keygen.service
 Wants=sshd.socket
-Wants=update-engine.service
 
 [Install]
 WantedBy=basic.target
