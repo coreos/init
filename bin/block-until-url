@@ -1,0 +1,19 @@
+#!/bin/bash
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# This is a simple script that blocks until the given URL starts responding.
+# Any response is acceptable, including 404. Just checking for connectivity.
+
+URL="$1"
+CAPATH="/usr/share/coreos-ca-certificates:/etc/ssl/certs"
+
+if [[ ! "$URL" =~ ^https?:// ]]; then
+    echo "$0: invalid url '$URL'" >&2
+    exit 1
+fi
+
+while ! curl -s --max-time 5 --head --capath "$CAPATH" "$URL" >/dev/null; do
+    sleep 0.5
+done
