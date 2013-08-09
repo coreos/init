@@ -4,49 +4,68 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if [ ! -b "$1" ]; then
+set -e
+
+if [[ ! -b "$1" ]]; then
     echo "$1 is not a block device" >&2
     exit 1
 fi
 
-STATE_DEV=$(readlink -f "$1")
-STATE_PART="${STATE_DEV##*[^0-9]}"
-DISK_DEV="${STATE_DEV%[0-9]*}"
+# Query udev to tell us about this block device and provide all
+# attributes as shell variables starting with STATE_
+eval $(udevadm info --query=property --root \
+    --export --export-prefix=STATE_ --name="$1")
 
-if sgdisk -v "$DISK_DEV" | grep -q "^Problem: The secondary header"; then
-    echo "Extending STATE partition..." >&2
+if [[ "${STATE_DEVTYPE}" != "partition" || \
+      "${STATE_ID_PART_TABLE_TYPE}" != "gpt" ]]
+then
+    echo "$1 is not a GPT partition" >&2
+    exit 1
+fi
 
-    # No resize operation so copy unknown partition properties.
-    info=$(sgdisk --info=$STATE_PART "$DISK_DEV")
-    guid=$(echo "$info" | awk '/^Partition unique GUID:/{print $4}')
-    start=$(echo "$info" | awk '/^First sector:/{print $3}')
-    if [ -z "$guid" -o -z "$start" ]; then
-        echo "Resize failed: unable to parse sgdisk output" >&2
+# Of all that excellent information udev just gave us it didn't provide
+# the name of the disk device, but the parent sysfs directory should be it.
+DISK_DEVNAME=$(udevadm info --query=name --root --path="${STATE_DEVPATH%/*}")
+
+if sgdisk -v "$DISK_DEVNAME" | grep -q "^Problem: The secondary header"; then
+    echo "Extending $STATE_ID_PART_ENTRY_NAME partition..." >&2
+
+    # Quick sanity check on metadata we need to preserve
+    if [[ -z "$STATE_ID_PART_ENTRY_NAME" || \
+          -z "$STATE_ID_PART_ENTRY_TYPE" || \
+          -z "$STATE_ID_PART_ENTRY_UUID" || \
+          -z "$STATE_ID_PART_ENTRY_NUMBER" || \
+          -z "$STATE_ID_PART_ENTRY_OFFSET" ]]
+    then
+        echo "Resize failed: Missing metadata from udev!" >&2
         exit 1
     fi
 
-    # No turning back now!
-    if ! sgdisk --move-second-header \
-            --delete=$STATE_PART \
-            --new=$STATE_PART:$start:0 \
-            --partition-guid=$STATE_PART:$guid \
-            --typecode=$STATE_PART:0x0700 \
-            --change-name=$STATE_PART:STATE \
-            "$DISK_DEV"; then
+    partno="$STATE_ID_PART_ENTRY_NUMBER"
+    if ! sgdisk \
+        --move-second-header \
+        --delete="$partno" \
+        --new="$partno:$STATE_ID_PART_ENTRY_OFFSET:0" \
+        --typecode="$partno:$STATE_ID_PART_ENTRY_TYPE" \
+        --partition-guid="$partno:$STATE_ID_PART_ENTRY_UUID" \
+        --change-name="$partno:$STATE_ID_PART_ENTRY_NAME" \
+        "$DISK_DEVNAME"
+    then
         echo "Resize failed: error updating GPT" >&2
         exit 1
     fi
 
     # sgdisk only can trigger a full-disk reload which fails while the
     # root filesystem is mounted. partprobe from parted is fancier.
-    partprobe "$DISK_DEV"
+    partprobe "$DISK_DEVNAME"
 
-    e2fsck -p -f "$STATE_DEV"
-    if [ "$?" != 0 -a "$?" != 1 ]; then
+    set +e
+    e2fsck -p -f "$STATE_DEVNAME"
+    if [[ $? -ne 0 && $? -ne 1 ]]; then
         echo "Resize failed: error during fsck" >&2
         exit 1
     fi
-    if ! resize2fs "$STATE_DEV"; then
+    if ! resize2fs "$STATE_DEVNAME"; then
         echo "Resize failed: error during resize2fs" >&2
         exit 1
     fi
