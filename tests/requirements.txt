@@ -1,0 +1,3 @@
+# Only included for using trial under Travis for pretty output,
+# the tests themselves only depend on python2.7's standard libraries.
+Twisted
