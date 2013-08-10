@@ -6,10 +6,11 @@ Wants=media-state.mount
 Wants=init-state.service
 Wants=usr-share-oem.mount
 Wants=home.mount
-Wants=var.mount
-Wants=srv.mount
 Wants=opt.mount
+Wants=srv.mount
+Wants=tmp.mount
 Wants=var-run.mount
+Wants=var.mount
 Wants=dev-mode.service
 # TODO(marineam): Does anything actually need this?
 Wants=media.mount
