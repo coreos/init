@@ -1,0 +1,10 @@
+#!/bin/sh
+
+OEM_RELEASE="/usr/share/oem/oem-release"
+
+# use oem if it exists and size is non-zero
+if [ -s "${OEM_RELEASE}" ]; then
+    head -n1 "${OEM_RELEASE}"
+else
+    systemd-detect-virt
+fi
