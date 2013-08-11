@@ -1,3 +1,7 @@
+[Unit]
+Description=Enable Local Services
+ConditionDirectoryNotEmpty=/media/state/units
+
 [Service]
 Type=oneshot
 ExecStart=/bin/sh -c 'systemctl enable --runtime /media/state/units/*'

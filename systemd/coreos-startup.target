@@ -2,18 +2,17 @@
 Description=CoreOS essentials
 # Filesystems!
 Wants=resize-state.service
-Wants=media-state.mount
-Wants=init-state.service
-Wants=usr-share-oem.mount
+Wants=dev-mode.service
 Wants=home.mount
+Wants=media-state.mount
+Wants=media.mount
 Wants=opt.mount
 Wants=srv.mount
 Wants=tmp.mount
+Wants=usr-share-oem.mount
+Wants=var-lock.mount
 Wants=var-run.mount
 Wants=var.mount
-Wants=dev-mode.service
-# TODO(marineam): Does anything actually need this?
-Wants=media.mount
 
 [Install]
 WantedBy=basic.target

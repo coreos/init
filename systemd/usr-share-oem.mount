@@ -1,10 +1,7 @@
 [Unit]
 DefaultDependencies=no
-After=local-fs-pre.target
-Wants=local-fs-pre.target
 Conflicts=umount.target
-Before=umount.target
-Before=local-fs.target
+Before=local-fs.target umount.target
 ConditionVirtualization=!container
 
 [Mount]

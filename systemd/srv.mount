@@ -1,6 +1,4 @@
 [Unit]
-Requires=init-state.service
-After=init-state.service
 Conflicts=umount.target
 Before=local-fs.target umount.target
 

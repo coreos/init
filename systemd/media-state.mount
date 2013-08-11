@@ -1,12 +1,9 @@
 [Unit]
 DefaultDependencies=no
-Wants=local-fs-pre.target
-After=local-fs-pre.target
 Wants=resize-state.service
 After=resize-state.service
 Conflicts=umount.target
-Before=umount.target
-Before=local-fs.target
+Before=local-fs.target umount.target
 ConditionVirtualization=!container
 
 [Mount]
