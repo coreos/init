@@ -1,0 +1,10 @@
+[Unit]
+Description=CoreOS Coordination
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/coreos-c10n
+
+[Install]
+WantedBy=multi-user.target
