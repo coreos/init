@@ -1,0 +1,17 @@
+# This is a service unit that calls mount because mount units cannot use
+# templates. Alternatively udev could use set the RUN attribute that and a
+# script could generate a mount unit at run time but this seems better.
+
+[Unit]
+Description=Mount 9P on /media/%I
+DefaultDependencies=no
+Wants=media.mount
+After=media.mount
+Conflicts=umount.target
+ConditionPathIsMountPoint=!/media/%I
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStartPre=/bin/mkdir -p /media/%I
+ExecStart=/bin/mount -t 9p -o trans=virtio,version=9p2000.L %I /media/%I
