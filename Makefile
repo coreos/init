@@ -4,6 +4,12 @@ DESTDIR :=
 all:
 	@echo "Nothing to build! Try make install"
 
+test:
+	$(MAKE) -C tests test
+
+test-root:
+	$(MAKE) -C tests test-root
+
 install:
 	install -m 755 -d \
 		$(DESTDIR)/lib/udev/rules.d \
