@@ -1,0 +1,7 @@
+[Unit]
+Description=Configure Addon /%I
+ConditionPathExists=|/%I/authorized_keys
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/coreos/addon_config /%I

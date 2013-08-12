@@ -1,0 +1,15 @@
+#!/bin/sh
+
+ADDON_PATH="$1"
+if [ -z "$ADDON_PATH" ]; then
+    echo "$0: missing addon path" >&2
+    exit 1
+fi
+
+# Load ssh keys if available
+if [ -f "$ADDON_PATH/authorized_keys" ]; then
+    ADDON_NAME=$(basename "$ADDON_PATH")
+    update-ssh-keys -a "$ADDON_NAME" "$ADDON_PATH/authorized_keys"
+fi
+
+# Anything else we should do?

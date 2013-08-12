@@ -5,6 +5,8 @@
 [Unit]
 Description=Mount 9P on /media/%I
 DefaultDependencies=no
+Wants=addon-run@media-%i.service addon-config@media-%i.service
+Before=addon-run@media-%i.service addon-config@media-%i.service
 Wants=media.mount
 After=media.mount
 Conflicts=umount.target
