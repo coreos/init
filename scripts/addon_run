@@ -1,0 +1,14 @@
+#!/bin/sh
+
+ADDON_PATH="$1"
+if [ -z "$ADDON_PATH" ]; then
+    echo "$0: missing addon path" >&2
+    exit 1
+elif [ -x "$ADDON_PATH/run" ]; then
+    exec "$ADDON_PATH/run"
+elif [ -x "$ADDON_PATH/run.sh" ]; then
+    exec "$ADDON_PATH/run.sh"
+else
+    echo "$0: $ADDON_PATH/run not executable" >&2
+    exit 1
+fi

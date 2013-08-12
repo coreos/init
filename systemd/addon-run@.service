@@ -1,0 +1,8 @@
+[Unit]
+Description=Run Addon /%I
+ConditionFileIsExecutable=|/%I/run
+ConditionFileIsExecutable=|/%I/run.sh
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/coreos/addon_run /%I

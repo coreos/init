@@ -1,10 +1,9 @@
 [Unit]
 DefaultDependencies=no
-After=local-fs-pre.target
-Wants=local-fs-pre.target
+Wants=addon-run@usr-share-oem.service addon-config@usr-share-oem.service
+Before=addon-run@usr-share-oem.service addon-config@usr-share-oem.service
 Conflicts=umount.target
-Before=umount.target
-Before=local-fs.target
+Before=local-fs.target umount.target
 ConditionVirtualization=!container
 
 [Mount]

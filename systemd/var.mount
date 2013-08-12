@@ -1,13 +1,6 @@
 [Unit]
-Requires=init-state.service
-After=init-state.service
 Conflicts=umount.target
 Before=local-fs.target umount.target
-# These units are installed with systemd
-Wants=var-run.mount
-Before=var-run.mount
-Wants=var-lock.mount
-Before=var-lock.mount
 
 [Mount]
 What=/media/state/overlays/var

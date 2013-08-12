@@ -5,8 +5,6 @@ DefaultDependencies=no
 # kinda ugly. http://0pointer.de/blog/projects/instances.html
 Requires=dev-disk-by\x2dlabel-STATE.device
 After=dev-disk-by\x2dlabel-STATE.device
-Wants=local-fs-pre.target
-Before=local-fs-pre.target
 ConditionVirtualization=!container
 
 [Service]

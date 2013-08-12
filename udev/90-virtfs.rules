@@ -1,0 +1,2 @@
+# expose virtual filesystem targets as device units in systemd
+SUBSYSTEM=="virtio", DRIVER=="9pnet_virtio", ATTR{mount_tag}=="*?", TAG+="systemd", ENV{SYSTEMD_WANTS}+="virtfs@$attr{mount_tag}.service"
