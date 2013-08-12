@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 if [[ $(id -u) -ne 0 ]]; then
-    echo "This test script uses losetup and therefor must be run as root." >&2
+    echo "This test script uses losetup and therefore must be run as root." >&2
     echo "Sorry, dealing with block devices is just kinda that way." >&2
     exit 1
 fi
