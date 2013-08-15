@@ -16,11 +16,14 @@ install:
 		$(DESTDIR)/usr/bin \
 		$(DESTDIR)/usr/lib/coreos \
 		$(DESTDIR)/usr/lib/systemd/system \
+		$(DESTDIR)/usr/lib/systemd/system-generators \
 		$(DESTDIR)/usr/lib/tmpfiles.d \
 		$(DESTDIR)/etc/ssh
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
 	install -m 644 systemd/system/* $(DESTDIR)/usr/lib/systemd/system
+	install -m 755 systemd/system-generators/* \
+		$(DESTDIR)/usr/lib/systemd/system-generators
 	install -m 644 udev/rules.d/* $(DESTDIR)/lib/udev/rules.d
 	install -m 644 -T configs/tmpfiles.conf \
 		$(DESTDIR)/usr/lib/tmpfiles.d/coreos-init.conf

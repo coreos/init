@@ -1,0 +1,37 @@
+#!/bin/bash
+# Alternate version of systemd-getty-generator which enables getty on all
+# active consoles rather than just the one mapped to /dev/console.
+# This script is based on systemd's src/getty-generator/getty-generator.c
+
+set -e
+DEST=/tmp
+SYSTEM_DATA_UNIT_PATH=/usr/lib/systemd/system
+
+add_serial_getty() {
+    local from="${SYSTEM_DATA_UNIT_PATH}/serial-getty@.service"
+    local to_dir="${DEST}/getty.target.wants"
+    local to_unit="${to_dir}/serial-getty@${1}.service"
+
+    mkdir -m 755 -p "${DEST}/getty.target.wants"
+    ln -sf "${from}" "${to_unit}"
+}
+
+# Standard generator setup, they take three arguments but allow none too.
+if [[ $# -gt 0 && $# -ne 3 ]]; then
+    echo "This program takes three or no arguments." >&2
+    exit 1
+fi
+
+# Use the first path provided, the "Normal" target for generators.
+if [[ $# -gt 0 ]]; then
+    DEST="$1"
+fi
+
+for tty in $(</sys/class/tty/console/active); do
+    # ignore VC terminals
+    if [[ "$tty" =~ tty[0-9]+$ ]]; then
+        continue
+    fi
+
+    add_serial_getty "$tty"
+done
