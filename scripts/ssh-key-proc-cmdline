@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Reads a sshkey from the kernel command line and appends it to the core user's
+# authorized_keys
+
+if [[ $(</proc/cmdline) =~ sshkey=\"([^\"]+)\" ]]; then
+	echo "${BASH_REMATCH[1]}" | update-ssh-keys -a proc-cmdline
+fi
