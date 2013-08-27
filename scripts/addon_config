@@ -9,7 +9,7 @@ fi
 # Load ssh keys if available
 if [ -f "$ADDON_PATH/authorized_keys" ]; then
     ADDON_NAME=$(basename "$ADDON_PATH")
-    update-ssh-keys -a "$ADDON_NAME" "$ADDON_PATH/authorized_keys"
+    update-ssh-keys -n -a "$ADDON_NAME" "$ADDON_PATH/authorized_keys"
 fi
 
 # Anything else we should do?
