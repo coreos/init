@@ -141,6 +141,15 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         self.assertEquals(err, '')
         self.assertHasKeys('valid2')
 
+    def test_no_replace(self):
+        self.test_add_one_file()
+        proc = self.run_script('-n', '-a', 'one', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertTrue(out.startswith('Skipping'))
+        self.assertEquals(proc.returncode, 0)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
     def test_add_two(self):
         self.test_add_one_file()
         proc = self.run_script('-a', 'two', self.pub_files['valid2'])
