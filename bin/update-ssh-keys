@@ -49,11 +49,6 @@ done
 
 shift $(( OPTIND - 1 ))
 
-if [[ -n "${ADD_NAME}" && -n "${DEL_NAME}" ]]; then
-    echo "$0: The -a and -d options cannot be combined." >&2
-    exit 1
-fi
-
 UPDATE_GROUP=$(id -ng "${UPDATE_USER}")
 UPDATE_HOME=$(getent passwd "${UPDATE_USER}" | cut -d: -f6)
 if [[ -z "${UPDATE_HOME}" ]]; then
@@ -97,7 +92,8 @@ if [[ -n "$ADD_NAME" ]]; then
         mv "${keyfile}" "${KEYS_DIR}/${ADD_NAME}"
         trap - EXIT
     fi
-elif [[ -n "$DEL_NAME" ]]; then
+fi
+if [[ -n "$DEL_NAME" ]]; then
     if [[ ! -f "${KEYS_DIR}/${DEL_NAME}" ]]; then
         echo "$0: no key set named ${DEL_NAME} found for ${UPDATE_USER}" >&2
         exit 1
