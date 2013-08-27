@@ -15,7 +15,9 @@ USAGE="Usage: $0 [-l] [-u user] [-a name file1... | -d name]
 Options:
     -u USER     Update the given user's authorized_key's file [${UPDATE_USER}]
     -a NAME     Add the given keys, using the given name to identify them.
+    -n          When adding, don't replace an existing key with the given name.
     -d NAME     Delete keys identified by the given name.
+    -D NAME     Disable the given set from being added with '-n'
     -l          List the names and number of keys currently installed.
     -h          This ;-)
 
@@ -30,26 +32,25 @@ files are provided with the -a option the keys will be read from stdin.
 
 ADD_NAME=""
 DEL_NAME=""
+DIS_NAME=""
+REPLACE=1
 LIST_ALL=0
 
-while getopts "lu:a:d:h" OPTION
+while getopts "lnu:a:d:D:h" OPTION
 do
     case $OPTION in
         l) LIST_ALL=1 ;;
+        n) REPLACE=0 ;;
         u) UPDATE_USER="$OPTARG" ;;
         a) ADD_NAME="$OPTARG" ;;
         d) DEL_NAME="$OPTARG" ;;
+        D) DIS_NAME="$OPTARG" ;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
 done
 
 shift $(( OPTIND - 1 ))
-
-if [[ -n "${ADD_NAME}" && -n "${DEL_NAME}" ]]; then
-    echo "$0: The -a and -d options cannot be combined." >&2
-    exit 1
-fi
 
 UPDATE_GROUP=$(id -ng "${UPDATE_USER}")
 UPDATE_HOME=$(getent passwd "${UPDATE_USER}" | cut -d: -f6)
@@ -82,15 +83,20 @@ fi
 chown "${UPDATE_USER}:${UPDATE_GROUP}" "${SSH_DIR}" "${KEYS_DIR}"
 
 if [[ -n "$ADD_NAME" ]]; then
-    keyfile=$(mktemp "${KEYS_DIR}/${ADD_NAME}.XXXXXXXXXX")
-    trap "rm -f '${keyfile}'" EXIT
-    chown "${UPDATE_USER}:${UPDATE_GROUP}" "${keyfile}"
-    cat "$@" > "${keyfile}"
-    echo "Adding/updating $ADD_NAME:"
-    ssh-keygen -l -f "${keyfile}"
-    mv "${keyfile}" "${KEYS_DIR}/${ADD_NAME}"
-    trap - EXIT
-elif [[ -n "$DEL_NAME" ]]; then
+    if [[ ${REPLACE} -eq 0 && -f "${KEYS_DIR}/${ADD_NAME}" ]]; then
+        echo "Skipping add ${ADD_NAME} for ${UPDATE_USER}, already exists."
+    else
+        keyfile=$(mktemp "${KEYS_DIR}/${ADD_NAME}.XXXXXXXXXX")
+        trap "rm -f '${keyfile}'" EXIT
+        chown "${UPDATE_USER}:${UPDATE_GROUP}" "${keyfile}"
+        cat "$@" > "${keyfile}"
+        echo "Adding/updating $ADD_NAME:"
+        ssh-keygen -l -f "${keyfile}"
+        mv "${keyfile}" "${KEYS_DIR}/${ADD_NAME}"
+        trap - EXIT
+    fi
+fi
+if [[ -n "$DEL_NAME" ]]; then
     if [[ ! -f "${KEYS_DIR}/${DEL_NAME}" ]]; then
         echo "$0: no key set named ${DEL_NAME} found for ${UPDATE_USER}" >&2
         exit 1
@@ -100,8 +106,13 @@ elif [[ -n "$DEL_NAME" ]]; then
         rm "${KEYS_DIR}/${DEL_NAME}"
     fi
 fi
+if [[ -n "$DIS_NAME" ]]; then
+    echo "Disabling ${DIS_NAME}:"
+    ssh-keygen -l -f "${KEYS_DIR}/${DIS_NAME}" || true
+    truncate --size=0 "${KEYS_DIR}/${DIS_NAME}"
+fi
 
-if [[ "$(ls "${KEYS_DIR}")" ]]; then
+if [[ "$(find "${KEYS_DIR}" -type f -size +1c)" ]]; then
     if [[ ${LIST_ALL} -eq 1 ]]; then
         echo "All keys for ${UPDATE_USER}:"
         for keyfile in "${KEYS_DIR}/"*; do

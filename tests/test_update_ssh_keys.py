@@ -141,6 +141,15 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         self.assertEquals(err, '')
         self.assertHasKeys('valid2')
 
+    def test_no_replace(self):
+        self.test_add_one_file()
+        proc = self.run_script('-n', '-a', 'one', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertTrue(out.startswith('Skipping'))
+        self.assertEquals(proc.returncode, 0)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
     def test_add_two(self):
         self.test_add_one_file()
         proc = self.run_script('-a', 'two', self.pub_files['valid2'])
@@ -168,6 +177,36 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         out, err = proc.communicate()
         self.assertEquals(proc.returncode, 0)
         self.assertIn(fingerprints['valid2'], out)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
+    def test_add_and_del(self):
+        self.test_add_one_file()
+        proc = self.run_script(
+                '-d', 'one', '-a', 'two', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Adding'))
+        self.assertIn('\nRemoving', out)
+        self.assertIn(fingerprints['valid1'], out)
+        self.assertIn(fingerprints['valid2'], out)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid2')
+
+    def test_disable(self):
+        self.test_add_two()
+        proc = self.run_script('-D', 'two')
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Disabling'))
+        self.assertIn(fingerprints['valid2'], out)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
+        proc = self.run_script('-n', '-a', 'two', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Skipping'))
         self.assertEquals(err, '')
         self.assertHasKeys('valid1')
 
