@@ -17,6 +17,7 @@ Options:
     -a NAME     Add the given keys, using the given name to identify them.
     -n          When adding, don't replace an existing key with the given name.
     -d NAME     Delete keys identified by the given name.
+    -D NAME     Disable the given set from being added with '-n'
     -l          List the names and number of keys currently installed.
     -h          This ;-)
 
@@ -31,10 +32,11 @@ files are provided with the -a option the keys will be read from stdin.
 
 ADD_NAME=""
 DEL_NAME=""
+DIS_NAME=""
 REPLACE=1
 LIST_ALL=0
 
-while getopts "lnu:a:d:h" OPTION
+while getopts "lnu:a:d:D:h" OPTION
 do
     case $OPTION in
         l) LIST_ALL=1 ;;
@@ -42,6 +44,7 @@ do
         u) UPDATE_USER="$OPTARG" ;;
         a) ADD_NAME="$OPTARG" ;;
         d) DEL_NAME="$OPTARG" ;;
+        D) DIS_NAME="$OPTARG" ;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
@@ -103,8 +106,13 @@ if [[ -n "$DEL_NAME" ]]; then
         rm "${KEYS_DIR}/${DEL_NAME}"
     fi
 fi
+if [[ -n "$DIS_NAME" ]]; then
+    echo "Disabling ${DIS_NAME}:"
+    ssh-keygen -l -f "${KEYS_DIR}/${DIS_NAME}" || true
+    truncate --size=0 "${KEYS_DIR}/${DIS_NAME}"
+fi
 
-if [[ "$(ls "${KEYS_DIR}")" ]]; then
+if [[ "$(find "${KEYS_DIR}" -type f -size +1c)" ]]; then
     if [[ ${LIST_ALL} -eq 1 ]]; then
         echo "All keys for ${UPDATE_USER}:"
         for keyfile in "${KEYS_DIR}/"*; do

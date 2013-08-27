@@ -193,6 +193,23 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         self.assertEquals(err, '')
         self.assertHasKeys('valid2')
 
+    def test_disable(self):
+        self.test_add_two()
+        proc = self.run_script('-D', 'two')
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Disabling'))
+        self.assertIn(fingerprints['valid2'], out)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
+        proc = self.run_script('-n', '-a', 'two', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Skipping'))
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
     def test_add_bad(self):
         self.test_add_one_file()
         proc = self.run_script('-a', 'bad', self.pub_files['bad'])
