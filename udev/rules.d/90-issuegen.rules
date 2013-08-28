@@ -1,0 +1,2 @@
+ACTION!="remove", SUBSYSTEM=="net", NAME=="", RUN+="/usr/lib/coreos/issuegen $kernel"
+ACTION!="remove", SUBSYSTEM=="net", NAME!="", RUN+="/usr/lib/coreos/issuegen $name"

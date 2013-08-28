@@ -3,6 +3,7 @@ Description=CoreOS essentials
 # Filesystems!
 Wants=resize-state.service
 Wants=dev-mode.service
+Wants=issuegen.service
 Wants=home.mount
 Wants=media-state.mount
 Wants=media.mount

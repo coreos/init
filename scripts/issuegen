@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+print_issue() {
+    echo
+    echo 'This is \n.\O (\s \m \r) \t'
+    for note in /run/issue.d/*; do
+        [ -f "${note}" ] && cat "${note}"
+    done
+    echo
+}
+
+mkdir -p /run/issue.d
+for eth in "$@"; do
+    echo "${eth}: \\4{${eth}} \\6{${eth}}" > "/run/issue.d/${eth}"
+done
+
+print_issue > /run/issue

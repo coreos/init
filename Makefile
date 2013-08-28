@@ -29,3 +29,4 @@ install:
 		$(DESTDIR)/usr/lib/tmpfiles.d/coreos-init.conf
 	install -m 644 configs/ssh_config $(DESTDIR)/etc/ssh
 	install -m 600 configs/sshd_config $(DESTDIR)/etc/ssh
+	ln -sf ../run/issue $(DESTDIR)/etc/issue
