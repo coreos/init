@@ -1,0 +1,8 @@
+[Unit]
+Description=Generate /run/issue
+DefaultDependencies=no
+RequiresMountsFor=/run
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/coreos/issuegen
