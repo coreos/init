@@ -23,8 +23,8 @@ Options:
 
 This tool provides a consistent way for different systems to add ssh public
 keys to a given user account, usually the default '${UPDATE_USER}' user.
-The -a and -d options are mutually exclusive. If neither are provided the
-authorized_keys file is simply regenerated using the existing keys.
+If -a, -d, nor -D are provided then the authorized_keys file is simply
+regenerated using the existing keys.
 
 With the -a option keys may be provided as files on the command line. If no
 files are provided with the -a option the keys will be read from stdin.
