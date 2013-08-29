@@ -150,6 +150,13 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         self.assertEquals(err, '')
         self.assertHasKeys('valid1')
 
+        proc = self.run_script('-n', '-A', 'one', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertTrue(out.startswith('Skipping'))
+        self.assertEquals(proc.returncode, 0)
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1')
+
     def test_add_two(self):
         self.test_add_one_file()
         proc = self.run_script('-a', 'two', self.pub_files['valid2'])
@@ -203,12 +210,21 @@ class UpdateSshKeysTestCase(unittest.TestCase):
         self.assertEquals(err, '')
         self.assertHasKeys('valid1')
 
-        proc = self.run_script('-n', '-a', 'two', self.pub_files['valid2'])
+        proc = self.run_script('-a', 'two', self.pub_files['valid2'])
         out, err = proc.communicate()
         self.assertEquals(proc.returncode, 0)
         self.assertTrue(out.startswith('Skipping'))
         self.assertEquals(err, '')
         self.assertHasKeys('valid1')
+
+    def test_enable(self):
+        self.test_disable()
+        proc = self.run_script('-A', 'two', self.pub_files['valid2'])
+        out, err = proc.communicate()
+        self.assertEquals(proc.returncode, 0)
+        self.assertTrue(out.startswith('Adding'))
+        self.assertEquals(err, '')
+        self.assertHasKeys('valid1', 'valid2')
 
     def test_add_bad(self):
         self.test_add_one_file()
