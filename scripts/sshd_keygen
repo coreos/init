@@ -18,3 +18,11 @@ if ! sshd -t &> /dev/null ; then
       echo "Failed to generate ssh key."
   done
 fi
+
+# Provide key fingerprints via issue
+mkdir -p /run/issue.d
+for KEY_TYPE in rsa dsa ; do
+  KEY_FILE=${SSH_DIR}/ssh_host_${KEY_TYPE}_key
+  ssh-keygen -l -f ${KEY_FILE}
+done | awk '{print "SSH host key: " $2 " " $4}' > /run/issue.d/00_ssh_host_keys
+/usr/lib/coreos/issuegen
