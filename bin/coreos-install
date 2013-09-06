@@ -1,0 +1,63 @@
+#!/bin/bash
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+set -e -o pipefail
+
+if [[ -z "${USER}" || "${USER}" == root ]]; then
+    UPDATE_USER="core"
+else
+    UPDATE_USER="${USER}"
+fi
+
+USAGE="Usage: $0 [-l] [-v version] [-d /dev/device]
+Options:
+    -d DEVICE   Install CoreOS to the given device
+    -v VERSION  Version to install (default to currently booted version)
+    -o OEM      OEM image type to install (e.g. vagrant, qemu, openstack)
+    -f          Forceably install without confirmation prompts
+    -h          This ;-)
+
+This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
+machine then use this tool to make a permanent install.
+"
+
+FORCE=0
+VERSION="dev-channel"
+OEM=""
+DEVICE=""
+
+while getopts "fd:v:h" OPTION
+do
+    case $OPTION in
+        f) FORCE=1 ;;
+        v) VERSION="$OPTARG" ;;
+        d) DEVICE="$OPTARG" ;;
+        o) OEM="$OPTARG" ;;
+        h) echo "$USAGE"; exit;;
+        *) exit 1;;
+    esac
+done
+
+# Device is required, error if it isn't provided
+if [ -z "${DEVICE}" ]; then
+  echo "error: expected a device\n\n"
+  echo "$USAGE"
+  exit 1
+fi
+
+# Append a trailing underscore to build the URL
+if [ -n "${OEM}" ]; then
+  FLAVOR="${OEM}_"
+fi
+
+IMAGE_URL="http://storage.core-os.net/coreos/amd64-generic/${VERSION}/coreos_production_${FLAVOR}image.bin.bz2"
+
+# TODO(philips): choose a better image location
+curl -s --fail $IMAGE_URL -o /tmp/coreos-image.bin
+
+
+
+# Everything we do should be user-access only!
+umask 077
