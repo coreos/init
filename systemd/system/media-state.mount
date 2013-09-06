@@ -4,6 +4,7 @@ Wants=resize-state.service
 After=resize-state.service
 Conflicts=umount.target
 Before=local-fs.target umount.target
+ConditionKernelCommandLine=!coreos.diskless
 ConditionVirtualization=!container
 
 [Mount]
