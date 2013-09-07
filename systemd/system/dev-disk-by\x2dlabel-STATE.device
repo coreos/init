@@ -1,3 +1,3 @@
 [Unit]
-ConditionKernelCommandLine=!diskless
+ConditionKernelCommandLine=!coreos.diskless
 ConditionVirtualization=!container
