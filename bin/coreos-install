@@ -31,7 +31,6 @@ Options:
     -V VERSION  Version to install (e.g. dev-channel) [default: ${VERSION}]
     -o OEM      OEM image type to install (e.g. ami) [default: ${OEM:-(none)}]
     -t TMPDIR   Temporary location with enough space to download images.
-    -f          Forcibly install without confirmation prompts.
     -v          Super verbose, for debugging.
     -h          This ;-)
 
@@ -118,13 +117,11 @@ BeiJ6tEeDHDzdA==
 -----END PGP PUBLIC KEY BLOCK-----
 "
 
-FORCE=0
 DEVICE=""
 
-while getopts "fV:d:o:t:vh" OPTION
+while getopts "V:d:o:t:vh" OPTION
 do
     case $OPTION in
-        f) FORCE=1 ;;
         V) VERSION="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
         o) OEM="$OPTARG" ;;
