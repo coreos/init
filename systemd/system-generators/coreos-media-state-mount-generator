@@ -1,0 +1,42 @@
+#!/bin/bash
+# Generate the media-state.mount unit based on kernel parameters
+
+set -e
+DEST=/tmp
+
+# Standard generator setup, they take three arguments but allow none too.
+if [[ $# -gt 0 && $# -ne 3 ]]; then
+    echo "This program takes three or no arguments." >&2
+    exit 1
+fi
+
+# Use the first path provided, the "Normal" target for generators.
+if [[ $# -gt 0 ]]; then
+    DEST="$1"
+fi
+
+tmpfs_state() {
+echo "media-state.mount: choosing tmpfs"
+UNIT="[Unit]
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+ConditionVirtualization=!container
+
+[Mount]
+What=none
+Where=/media/state
+Options=size=2G,exec,mode=750
+Type=tmpfs"
+
+echo "${UNIT}" > ${DEST}/media-state.mount
+exit 0
+}
+
+read -r CMDLINE </proc/cmdline;
+
+for i in $CMDLINE; do
+    case $i in
+         state=tmpfs*) tmpfs_state ;;
+    esac
+done
