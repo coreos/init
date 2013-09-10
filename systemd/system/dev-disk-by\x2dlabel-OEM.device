@@ -1,4 +1,4 @@
 [Unit]
-ConditionKernelCommandLine=!coreos.diskless
-ConditionKernelCommandLine=!coreos.statediskonly
+ConditionKernelCommandLine=!root=squashfs:
+ConditionKernelCommandLine=!root=squashfs
 ConditionVirtualization=!container
