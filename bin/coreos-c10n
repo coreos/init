@@ -19,20 +19,34 @@ USER_DATA=$(curl -s --fail $META_URL/user-data)
 if [ $? -eq 0 ] && [ ! -z "$USER_DATA" ]; then
         URL=$USER_DATA
 
-        echo $URL | grep -q '^https://' || (echo Coordination URL requires valid SSL; exit 1)
+        if echo $URL | grep -q '^https://'; then
+                
+                # Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
+                if echo $URL | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
+                        CURL_URL=$URL/raw
+                else
+                        CURL_URL=$URL
+                fi
 
-        TMP=`mktemp`
+                TMP=`mktemp`
 
-        curl -s "$USER_DATA/raw" > $TMP
+                curl -s "$CURL_URL" > $TMP
 
-        # validate ssh key
-        ssh-keygen -l -f $TMP > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-                cat $TMP >> /home/core/.ssh/authorized_keys
-                echo "SSH key updated"
-                chown -R core: /home/core/.ssh/
-        else
-                echo "Not a valid ssh key"
+                if head -n 1 $TMP | grep -q '^#!'; then # if we get a script starting with #!, we'll run it
+                        # run the script
+                        chmod +x $TMP && eval $TMP
+                else # otherwise, if we get an ssh key, we'll install
+                        # validate ssh key
+                        ssh-keygen -l -f $TMP > /dev/null 2>&1
+                        if [ $? -eq 0 ]; then
+                                cat $TMP >> /home/core/.ssh/authorized_keys
+                                echo "SSH key updated"
+                                chown -R core: /home/core/.ssh/
+                        else # not a valid script nor ssh key
+
+                                echo "Not a script or valid ssh key"
+                        fi
+                fi # else, nothing
         fi
 fi
 
