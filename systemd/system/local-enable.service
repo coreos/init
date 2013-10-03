@@ -6,7 +6,7 @@ ConditionDirectoryNotEmpty=/media/state/units
 Type=oneshot
 ExecStart=/bin/sh -c 'systemctl enable --runtime /media/state/units/*'
 # Before and Requires does not start these newly installed units
-ExecStartPost=/usr/bin/systemctl start local.target
+ExecStartPost=/usr/bin/systemctl start --no-block local.target
 
 [Install]
 WantedBy=multi-user.target
