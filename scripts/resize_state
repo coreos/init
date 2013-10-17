@@ -45,6 +45,7 @@ if sgdisk -v "$DISK_DEVNAME" | grep -q "^Problem: The secondary header"; then
     if ! sgdisk \
         --move-second-header \
         --delete="$partno" \
+        --set-alignment=1 \
         --new="$partno:$STATE_ID_PART_ENTRY_OFFSET:0" \
         --typecode="$partno:$STATE_ID_PART_ENTRY_TYPE" \
         --partition-guid="$partno:$STATE_ID_PART_ENTRY_UUID" \
