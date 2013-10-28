@@ -200,6 +200,9 @@ done
 echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
 bunzip2 --show-progress --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
+# inform the OS of partition table changes
+/usr/sbin/partprobe
+
 rm -rf "${WORKDIR}"
 trap - EXIT
 
