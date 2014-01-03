@@ -18,6 +18,7 @@ install:
 		$(DESTDIR)/usr/lib/systemd/system \
 		$(DESTDIR)/usr/lib/systemd/system-generators \
 		$(DESTDIR)/usr/lib/tmpfiles.d \
+		$(DESTDIR)/etc/env.d \
 		$(DESTDIR)/etc/ssh
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
@@ -25,6 +26,7 @@ install:
 	install -m 755 systemd/system-generators/* \
 		$(DESTDIR)/usr/lib/systemd/system-generators
 	install -m 644 udev/rules.d/* $(DESTDIR)/lib/udev/rules.d
+	install -m 644 configs/editor.sh $(DESTDIR)/etc/env.d/99editor
 	install -m 644 -T configs/tmpfiles.conf \
 		$(DESTDIR)/usr/lib/tmpfiles.d/coreos-init.conf
 	install -m 644 configs/ssh_config $(DESTDIR)/etc/ssh
