@@ -7,6 +7,9 @@ Before=local-fs.target umount.target
 ConditionKernelCommandLine=!coreos.diskless
 ConditionVirtualization=!container
 
+# TODO(philips): remove once everyone is amd64-usr
+ConditionPathIsMountPoint=!/usr
+
 [Mount]
 What=/dev/disk/by-label/STATE
 Where=/media/state

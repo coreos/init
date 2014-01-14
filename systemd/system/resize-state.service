@@ -8,6 +8,8 @@ After=dev-disk-by\x2dlabel-STATE.device
 ConditionKernelCommandLine=!state=tmpfs:
 ConditionKernelCommandLine=!state=tmpfs
 ConditionVirtualization=!container
+# TODO(philips): remove once everyone is amd64-usr
+ConditionPathIsMountPoint=!/usr
 
 [Service]
 Type=oneshot
