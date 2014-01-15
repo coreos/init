@@ -2,6 +2,9 @@
 Conflicts=umount.target
 Before=local-fs.target umount.target
 
+# TODO(philips): remove once everyone is amd64-usr
+ConditionPathIsMountPoint=!/usr
+
 [Mount]
 What=/media/state/overlays/home
 Where=/home
