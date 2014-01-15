@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Copyright (c) 2013 The CoreOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+SSH_DIR=/etc/ssh
+mkdir -p ${SSH_DIR}
+
+if ! sshd -t &> /dev/null ; then
+  # sshd will not start with current config, generate a new set of keys.
+  for KEY_TYPE in rsa dsa ; do
+    KEY_FILE=${SSH_DIR}/ssh_host_${KEY_TYPE}_key
+    # If keys exist delete them because they are not valid and ssh-keygen
+    # will not overwrite them.
+    rm -f ${KEY_FILE} ${KEY_FILE}.pub
+    ssh-keygen -q -f ${KEY_FILE} -N '' -t ${KEY_TYPE} ||
+      echo "Failed to generate ssh key."
+  done
+fi
+
+# Provide key fingerprints via issue
+mkdir -p /run/issue.d
+for KEY_TYPE in rsa dsa ; do
+  KEY_FILE=${SSH_DIR}/ssh_host_${KEY_TYPE}_key
+  ssh-keygen -l -f ${KEY_FILE}
+done | awk '{print "SSH host key: " $2 " " $4}' > /run/issue.d/00_ssh_host_keys
+/usr/lib/coreos/issuegen
