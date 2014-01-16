@@ -15,13 +15,9 @@ CROS_DEBUG=$((! $?))
 # correctly set in a test VM after updating itself to itself (that is, it does
 # not fail cros_au_test_harness).
 if [ "$CROS_DEBUG" = "1" -o -f /root/.dev_mode ]; then
-  # Create dev_image directory in base images in developer mode.
-  if [ ! -d /media/state/overlays/usr/local ]; then
-    mkdir -p -m 0755 /media/state/overlays/usr/local
-  fi
-  # Mount and then remount to enable exec/suid.
-  mount -n --bind /media/state/overlays/usr/local /usr/local
-  mount -n -o remount,exec,suid /usr/local
+  # TODO(polvi): remove non -usr image stuff post conversion
+  # This will fail if it is a non-usr image, but that's alright!
+  mount -n -o remount,rw /usr
   # Take a stab at mounting root read-write
   mount -n -o remount,rw /
 fi
