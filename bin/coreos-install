@@ -144,7 +144,7 @@ if ! [[ $(lsblk -n -d -o TYPE "${DEVICE}") =~ ^(disk|loop)$ ]]; then
 fi
 
 if [[ ! -w "${DEVICE}" ]]; then
-    echo "$0: Target block device (${DEVICE}) is not writable." >&2
+    echo "$0: Target block device (${DEVICE}) is not writable (are you root?)" >&2
     exit 1
 fi
 
@@ -198,10 +198,10 @@ for sum in sha1 sha512; do
 done
 
 echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
-bunzip2 --show-progress --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
+bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
 # inform the OS of partition table changes
-/usr/sbin/partprobe
+partprobe
 
 rm -rf "${WORKDIR}"
 trap - EXIT
