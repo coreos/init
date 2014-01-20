@@ -1,0 +1,18 @@
+# Normally systemd-remount-fs does this but only if / is in fstab.
+# Since that is not the case in CoreOS we need this instead.
+
+[Unit]
+Description=Remount Root File System
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=systemd-remount-fs.service
+Before=local-fs-pre.target local-fs.target shutdown.target
+Wants=local-fs-pre.target
+
+ConditionPathIsMountPoint=/
+ConditionPathIsReadWrite=!/
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mount -o remount,rw /
