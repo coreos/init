@@ -1,5 +1,5 @@
 [Unit]
-Description=Expand STATE partition
+Description=Resize STATE partition
 DefaultDependencies=no
 # systemd auto-generates device units based on path but escapes get
 # kinda ugly. http://0pointer.de/blog/projects/instances.html
@@ -14,5 +14,5 @@ ConditionPathIsMountPoint=!/usr
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/lib/coreos/resize_state /dev/disk/by-label/STATE
+ExecStart=/usr/bin/cgpt resize LABEL=STATE
 StandardOutput=journal+console
