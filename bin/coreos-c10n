@@ -10,45 +10,73 @@ fi
 C10N_ENDPOINT=https://core-api.appspot.com/v1/c10n/group
 META_URL="http://169.254.169.254/latest"
 
-ETCD_BOOTSTRAP="/var/run/etcd/bootstrap.config"
+BOOTSTRAP_PEERS="/var/run/etcd/bootstrap.config"
+BOOTSTRAP_DISCOVERY="/var/run/etcd/bootstrap.disco"
 
-/usr/bin/block-until-url $C10N_ENDPOINT
 /usr/bin/block-until-url $META_URL
 
+# Attempt to download userdata, exiting on failure or no user-data is found
 USER_DATA=$(curl -s --fail $META_URL/user-data)
-if [ $? -eq 0 ] && [ ! -z "$USER_DATA" ]; then
-        URL=$USER_DATA
 
-        if echo $URL | grep -q '^https://'; then
-                
-                # Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
-                if echo $URL | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
-                        CURL_URL=$URL/raw
-                else
-                        CURL_URL=$URL
-                fi
-
-                TMP=`mktemp`
-
-                curl -s "$CURL_URL" > $TMP
-
-                if head -n 1 $TMP | grep -q '^#!'; then # if we get a script starting with #!, we'll run it
-                        # run the script
-                        chmod +x $TMP && eval $TMP
-                else # otherwise, if we get an ssh key, we'll install
-                        # validate ssh key
-                        ssh-keygen -l -f $TMP > /dev/null 2>&1
-                        if [ $? -eq 0 ]; then
-                                cat $TMP >> /home/core/.ssh/authorized_keys
-                                echo "SSH key updated"
-                                chown -R core: /home/core/.ssh/
-                        else # not a valid script nor ssh key
-
-                                echo "Not a script or valid ssh key"
-                        fi
-                fi # else, nothing
-        fi
+if [ $? -eq 0 ]; then
+	echo "Unable to communicate with EC2 metadata service"
+	exit 1
+	
+elif [ -z "$USER_DATA" ]; then
+	echo "No user-data provided"
+	exit 0
 fi
 
-IP=$(curl -s $META_URL/meta-data/local-ipv4)
-curl -s $C10N_ENDPOINT -d "c10n_url=$URL" -d"ip_list=$IP" > $ETCD_BOOTSTRAP
+# If user-data is an HTTPS url, follow it
+if echo $USER_DATA | grep -q '^https://'; then
+	# Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
+	if echo $USER_DATA | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
+		USER_DATA=$USER_DATA/raw
+	fi
+
+	echo "Downloading contents of URL: ${USER_DATA}"
+
+	USER_DATA=$(curl -s $USER_DATA)
+fi
+
+# Write user-data to disk for future validation
+TMP=$(mktemp)
+echo "$USER_DATA" > $TMP
+
+# If user-data is a script, execute it
+if echo $USER_DATA | head -n 1 | grep -q '^#!'; then
+	echo "Executing user-data as script at ${TMP}"
+	chmod +x $TMP
+	. $TMP
+
+# Validate the user-data as an SSH key, installing it if so
+else
+	# This just validates the key
+	ssh-keygen -l -f $TMP > /dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		cat $TMP >> /home/core/.ssh/authorized_keys
+		echo "SSH key updated"
+		chown -R core: /home/core/.ssh/
+		exit 0
+	else
+		echo "user-data is not a valid SSH key"
+		# The user-data is only consumeable as a c10n token as far as we can tell
+		C10N_TOKEN=$USER_DATA
+	fi
+fi
+
+# After all that, if a script happened to set the discovery URL, write it to disk for etcd-bootstrap
+if [ -n "${ETCD_DISCOVERY_URL}"  ]; then
+	echo "Using '${ETCD_DISCOVERY_URL}' as etcd discovery url"
+	echo "${ETCD_DISCOVERY_URL}" > $BOOTSTRAP_DISCOVERY
+# ...otherwise, we treat the provided user-data as a legacy c10n URL
+elif [ -n "${C10N_TOKEN}" ]; then
+	echo "Using '$C10N_TOKEN' as c10n token"
+
+	# Assert we have networking up and able to access the c10n service
+	/usr/bin/block-until-url $C10N_ENDPOINT
+
+	IP=$(curl -s $META_URL/meta-data/local-ipv4)
+	curl -s $C10N_ENDPOINT -d "c10n_url=$C10N_TOKEN" -d"ip_list=$IP" > $BOOTSTRAP_PEERS
+fi
