@@ -69,7 +69,6 @@ else
 		cat $TMP >> /home/core/.ssh/authorized_keys
 		echo "SSH key updated"
 		chown -R core: /home/core/.ssh/
-		exit 0
 	fi
 fi
 
