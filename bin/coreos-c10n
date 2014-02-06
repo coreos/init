@@ -48,9 +48,13 @@ echo "$USER_DATA" > $TMP
 
 # If user-data is a script, execute it
 if echo $USER_DATA | head -n 1 | grep -q '^#!'; then
-	echo "Executing user-data as script at ${TMP}"
+	echo "Executing user-data as script"
 	chmod +x $TMP
-	. $TMP
+	$TMP
+
+	if grep -q '^ETCD_DISCOVERY_URL=' $TMP; then
+		eval $(grep  '^ETCD_DISCOVERY_URL=' $TMP | tail -n1)
+	fi
 
 # Validate the user-data as an SSH key, installing it if so
 else
