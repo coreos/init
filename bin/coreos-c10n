@@ -51,7 +51,7 @@ trap "rm -f ${TMP}" EXIT
 echo "${USER_DATA}" > $TMP
 
 # If user-data is a script, execute it
-if echo "${USER_DATA}" | head -n 1 | grep -q '^#!'; then
+if  head -n 1 $TMP | grep -q '^#!'; then
 	echo "Executing user-data as script"
 	chmod +x $TMP
 	$TMP
