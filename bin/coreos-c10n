@@ -39,8 +39,11 @@ if echo $USER_DATA | grep -q '^https://'; then
 	USER_DATA=$(curl -s $USER_DATA)
 fi
 
-# Write user-data to disk for future validation
+# Create temporary file that gets cleaned up on exit
 TMP=$(mktemp)
+trap "rm -f ${TMP}" EXIT
+
+# Write user-data to disk for future validation
 echo "$USER_DATA" > $TMP
 
 # If user-data is a script, execute it
