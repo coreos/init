@@ -26,21 +26,21 @@ if [ $? -eq 0 ]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
 	
-elif [ -z "$USER_DATA" ]; then
+elif [ -z "${USER_DATA}" ]; then
 	echo "No user-data provided"
 	exit 0
 fi
 
 # If user-data is an HTTPS url, follow it
-if echo $USER_DATA | grep -q '^https://'; then
+if echo "${USER_DATA}" | grep -q '^https://'; then
 	# Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
-	if echo $USER_DATA | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
-		USER_DATA=$USER_DATA/raw
+	if echo "${USER_DATA}" | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
+		USER_DATA="${USER_DATA}/raw"
 	fi
 
 	echo "Downloading contents of URL: ${USER_DATA}"
 
-	USER_DATA=$(curl -s $USER_DATA)
+	USER_DATA="$(curl -s $USER_DATA)"
 fi
 
 # Create temporary file that gets cleaned up on exit
@@ -48,10 +48,10 @@ TMP=$(mktemp)
 trap "rm -f ${TMP}" EXIT
 
 # Write user-data to disk for future validation
-echo "$USER_DATA" > $TMP
+echo "${USER_DATA}" > $TMP
 
 # If user-data is a script, execute it
-if echo $USER_DATA | head -n 1 | grep -q '^#!'; then
+if echo "${USER_DATA}" | head -n 1 | grep -q '^#!'; then
 	echo "Executing user-data as script"
 	chmod +x $TMP
 	$TMP
