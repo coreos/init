@@ -18,6 +18,10 @@ BOOTSTRAP_DISCOVERY="/var/run/etcd/bootstrap.disco"
 # Attempt to download userdata, exiting on failure or no user-data is found
 USER_DATA=$(curl -s --fail $META_URL/user-data)
 
+# Preserve the original user-data contents to use as the c10n token in case
+# a discovery URL is not provided.
+C10N_TOKEN="${USER_DATA}"
+
 if [ $? -eq 0 ]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
@@ -66,10 +70,6 @@ else
 		echo "SSH key updated"
 		chown -R core: /home/core/.ssh/
 		exit 0
-	else
-		echo "user-data is not a valid SSH key"
-		# The user-data is only consumeable as a c10n token as far as we can tell
-		C10N_TOKEN=$USER_DATA
 	fi
 fi
 
