@@ -66,9 +66,7 @@ else
 	ssh-keygen -l -f $TMP > /dev/null 2>&1
 
 	if [ $? -eq 0 ]; then
-		cat $TMP >> /home/core/.ssh/authorized_keys
-		echo "SSH key updated"
-		chown -R core: /home/core/.ssh/
+		update-ssh-keys -a c10n $TMP
 	fi
 fi
 
