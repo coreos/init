@@ -18,10 +18,6 @@ BOOTSTRAP_DISCOVERY="/var/run/etcd/bootstrap.disco"
 # Attempt to download userdata, exiting on failure or no user-data is found
 USER_DATA=$(curl -s --fail $META_URL/user-data)
 
-# Preserve the original user-data contents to use as the c10n token in case
-# a discovery URL is not provided.
-C10N_TOKEN="${USER_DATA}"
-
 if [ $? -ne 0 ]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
@@ -30,6 +26,10 @@ elif [ -z "${USER_DATA}" ]; then
 	echo "No user-data provided"
 	exit 0
 fi
+
+# Preserve the original user-data contents to use as the c10n token in case
+# a discovery URL is not provided.
+C10N_TOKEN="${USER_DATA}"
 
 # If user-data is an HTTPS url, follow it
 if echo "${USER_DATA}" | grep -q '^https://'; then
