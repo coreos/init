@@ -22,7 +22,7 @@ USER_DATA=$(curl -s --fail $META_URL/user-data)
 # a discovery URL is not provided.
 C10N_TOKEN="${USER_DATA}"
 
-if [ $? -eq 0 ]; then
+if [ $? -ne 0 ]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
 	
