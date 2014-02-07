@@ -91,5 +91,5 @@ fi
 
 if [ "$START_FLEET" = "1" ]; then
 	echo "Starting fleet"
-	systemctl start fleet
+	systemctl start --no-block fleet
 fi
