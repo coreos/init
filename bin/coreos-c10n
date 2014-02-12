@@ -17,12 +17,13 @@ BOOTSTRAP_DISCOVERY="/var/run/etcd/bootstrap.disco"
 
 # Attempt to download userdata, exiting on failure or no user-data is found
 USER_DATA=$(curl -s --fail $META_URL/user-data)
+retcode=$?
 
-if [ $? -ne 0 ]; then
+# exit code 22 is http code 404, meaning user-data is blank
+if [[ $retcode -ne 0 && $retcode -ne 22 ]]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
-	
-elif [ -z "${USER_DATA}" ]; then
+elif [[ $retcode -eq 22 || -z "${USER_DATA}" ]]; then
 	echo "No user-data provided"
 	exit 0
 fi
