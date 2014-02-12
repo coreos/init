@@ -5,8 +5,6 @@ Description=CoreOS Coordination
 Type=oneshot
 RemainAfterExit=no
 ExecStart=/usr/bin/coreos-c10n
-Restart=on-failure
-RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target
