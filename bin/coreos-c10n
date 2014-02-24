@@ -7,6 +7,12 @@ if [ "${VIRT}" != "ec2" ]; then
 	exit 0
 fi
 
+depwarn() {
+	DOCS="https://coreos.com/docs/where-are-you"
+	echo "DEPRECATION WARNING! $1 See docs for the new cloud-config format here: $DOCS" 1>&2;
+}
+
+
 C10N_ENDPOINT=https://core-api.appspot.com/v1/c10n/group
 META_URL="http://169.254.169.254/latest"
 
@@ -17,13 +23,12 @@ BOOTSTRAP_DISCOVERY="/var/run/etcd/bootstrap.disco"
 
 # Attempt to download userdata, exiting on failure or no user-data is found
 USER_DATA=$(curl -s --fail $META_URL/user-data)
-retcode=$?
 
-# exit code 22 is http code 404, meaning user-data is blank
-if [[ $retcode -ne 0 && $retcode -ne 22 ]]; then
+if [ $? -ne 0 ]; then
 	echo "Unable to communicate with EC2 metadata service"
 	exit 1
-elif [[ $retcode -eq 22 || -z "${USER_DATA}" ]]; then
+
+elif [ -z "${USER_DATA}" ]; then
 	echo "No user-data provided"
 	exit 0
 fi
@@ -34,6 +39,8 @@ C10N_TOKEN="${USER_DATA}"
 
 # If user-data is an HTTPS url, follow it
 if echo "${USER_DATA}" | grep -q '^https://'; then
+	depwarn "Resolving user-data as a URL is no longer supported."
+
 	# Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
 	if echo "${USER_DATA}" | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
 		USER_DATA="${USER_DATA}/raw"
@@ -53,20 +60,32 @@ echo "${USER_DATA}" > $TMP
 
 # If user-data is a script, execute it
 if  head -n 1 $TMP | grep -q '^#!'; then
-	echo "Executing user-data as script"
-	chmod +x $TMP
-	$TMP
+	coreos-cloudinit --from-file $TMP
 
 	if grep -q '^ETCD_DISCOVERY_URL=' $TMP; then
+		depwarn "The ETCD_DISCOVERY_URL variable is no longer used to bootstrap etcd."
 		eval $(grep  '^ETCD_DISCOVERY_URL=' $TMP | tail -n1)
 	fi
 
 	if grep -q '^START_FLEET=1' $TMP; then
+		depwarn "The START_FLEET variable is no longer used."
 		START_FLEET=1
+	fi
+
+# If user-data is a cloud-config, hand it off to the new hotness
+elif head -n 1 $TMP | grep -q '^#cloud-config'; then
+	coreos-cloudinit --from-file $TMP
+
+	# If an etcd discovery URL was found, we can assume the new hotness
+	# will handle bootstrapping, allowing us to clear the c10n token
+	if head -n 1 $TMP | grep -q 'discovery_url:'; then
+		C10N_TOKEN=""
 	fi
 
 # Validate the user-data as an SSH key, installing it if so
 else
+	depwarn "User-data is no longer interpreted as an SSH key."
+
 	# This just validates the key
 	ssh-keygen -l -f $TMP > /dev/null 2>&1
 
@@ -81,6 +100,8 @@ if [ -n "${ETCD_DISCOVERY_URL}"  ]; then
 	echo "${ETCD_DISCOVERY_URL}" > $BOOTSTRAP_DISCOVERY
 # ...otherwise, we treat the provided user-data as a legacy c10n URL
 elif [ -n "${C10N_TOKEN}" ]; then
+	depwarn "The c10n service is no longer used to bootstrap etcd."
+
 	echo "Using '$C10N_TOKEN' as c10n token"
 
 	# Assert we have networking up and able to access the c10n service
