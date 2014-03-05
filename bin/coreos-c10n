@@ -8,7 +8,7 @@ if [ "${VIRT}" != "ec2" ]; then
 fi
 
 depwarn() {
-	DOCS="https://coreos.com/docs/where-are-you"
+	DOCS="https://github.com/coreos/coreos-cloudinit#cloud-config"
 	echo "DEPRECATION WARNING! $1 See docs for the new cloud-config format here: $DOCS" 1>&2;
 }
 
