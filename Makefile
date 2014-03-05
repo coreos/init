@@ -16,6 +16,7 @@ common:
 		$(DESTDIR)/usr/bin \
 		$(DESTDIR)/usr/lib/coreos \
 		$(DESTDIR)/usr/lib/systemd/system \
+		$(DESTDIR)/usr/lib/systemd/network \
 		$(DESTDIR)/usr/lib/systemd/system-generators \
 		$(DESTDIR)/usr/lib/tmpfiles.d \
 		$(DESTDIR)/etc/env.d \
@@ -23,6 +24,7 @@ common:
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
 	install -m 644 systemd/system/* $(DESTDIR)/usr/lib/systemd/system
+	install -m 644 systemd/network/* $(DESTDIR)/usr/lib/systemd/network
 	install -m 755 systemd/system-generators/* \
 		$(DESTDIR)/usr/lib/systemd/system-generators
 	install -m 644 udev/rules.d/* $(DESTDIR)/lib/udev/rules.d
