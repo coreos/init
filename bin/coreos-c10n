@@ -39,7 +39,7 @@ C10N_TOKEN="${USER_DATA}"
 
 # If user-data is an HTTPS url, follow it
 if echo "${USER_DATA}" | grep -q '^https://'; then
-	depwarn "Resolving user-data as a URL is no longer supported."
+	depwarn "Resolving user-data as a URL is deprecated."
 
 	# Backwards compatibility.  If we have a GitHub gist that doesn't end in /raw, we'll append it to before grabbing the gist
 	if echo "${USER_DATA}" | grep -e '^https://gist.github.com' | grep -v -e 'raw$'; then
@@ -63,12 +63,12 @@ if  head -n 1 $TMP | grep -q '^#!'; then
 	coreos-cloudinit --from-file $TMP
 
 	if grep -q '^ETCD_DISCOVERY_URL=' $TMP; then
-		depwarn "The ETCD_DISCOVERY_URL variable is no longer used to bootstrap etcd."
+		depwarn "The ETCD_DISCOVERY_URL variable is deprecated."
 		eval $(grep  '^ETCD_DISCOVERY_URL=' $TMP | tail -n1)
 	fi
 
 	if grep -q '^START_FLEET=1' $TMP; then
-		depwarn "The START_FLEET variable is no longer used."
+		depwarn "The START_FLEET variable is deprecated."
 		START_FLEET=1
 	fi
 
@@ -84,7 +84,7 @@ elif head -n 1 $TMP | grep -q '^#cloud-config'; then
 
 # Validate the user-data as an SSH key, installing it if so
 else
-	depwarn "User-data is no longer interpreted as an SSH key."
+	depwarn "Interpreting user-data as an SSH key is deprecated."
 
 	# This just validates the key
 	ssh-keygen -l -f $TMP > /dev/null 2>&1
@@ -100,7 +100,7 @@ if [ -n "${ETCD_DISCOVERY_URL}"  ]; then
 	echo "${ETCD_DISCOVERY_URL}" > $BOOTSTRAP_DISCOVERY
 # ...otherwise, we treat the provided user-data as a legacy c10n URL
 elif [ -n "${C10N_TOKEN}" ]; then
-	depwarn "The c10n service is no longer used to bootstrap etcd."
+	depwarn "Bootstrapping etcd with the c10n service is deprecated."
 
 	echo "Using '$C10N_TOKEN' as c10n token"
 
