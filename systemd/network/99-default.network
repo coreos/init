@@ -1,5 +1,2 @@
-[Match]
-Path=pci*
-
 [Network]
 DHCP=true
