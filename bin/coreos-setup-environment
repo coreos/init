@@ -1,0 +1,30 @@
+#!/bin/bash +x
+
+ENV=$1
+
+if [ -z "$ENV" ]; then
+        echo usage: $0 /etc/environment
+        exit 1
+fi
+# test for rw
+touch $ENV
+if [ $? -ne 0 ]; then
+        echo exiting, unable to modify: $ENV
+        exit 1
+fi
+
+OEM_SCRIPT="/usr/share/oem/usr/bin/coreos-setup-environment"
+if [ -x "${OEM_SCRIPT}" ]; then
+	echo "Found oem coreos-setup-environment, using that"
+	exec ${OEM_SCRIPT} ${ENV}
+fi
+
+# use the ip from src of an internet routed addr, go beavs
+ROUTABLE_IP=$(ip route get 128.193.4.20 | awk '{print $7}')
+if [ -n "$ROUTABLE_IP" ]; then
+	echo COREOS_PUBLIC_IPV4=${ROUTABLE_IP} >> $ENV
+else
+	echo COREOS_PUBLIC_IPV4=0.0.0.0 >> $ENV
+fi
+
+echo COREOS_PRIVATE_IPV4=127.0.0.1 >> $ENV
