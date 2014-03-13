@@ -1,12 +1,12 @@
 [Unit]
 Description=coreos-cloudinit for /usr/share/oem/cloud-config.yml
-Requires=usr-share-oem.mount
 Requires=dbus.service
-After=usr-share-oem.mount
 After=dbus.service
+RequiresMountsFor=/usr/share/oem
 ConditionPathExists=/usr/share/oem/cloud-config.yml
 
 [Service]
+Type=oneshot
 ExecStart=/usr/bin/coreos-cloudinit --from-file=/usr/share/oem/cloud-config.yml
 
 [Install]
