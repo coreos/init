@@ -19,6 +19,10 @@ if [ -x "${OEM_SCRIPT}" ]; then
 	exec ${OEM_SCRIPT} ${ENV}
 fi
 
+sed -i -e '/^COREOS_PUBLIC_IPV4=/d' \
+    -e '/^COREOS_PRIVATE_IPV4=/d' \
+    "${ENV}"
+
 # use the ip from src of an internet routed addr, go beavs
 ROUTABLE_IP=$(ip route get 128.193.4.20 | awk '{print $7}')
 if [ -n "$ROUTABLE_IP" ]; then
