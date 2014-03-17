@@ -13,7 +13,7 @@ if [ $? -ne 0 ]; then
         exit 1
 fi
 
-OEM_SCRIPT="/usr/share/oem/usr/bin/coreos-setup-environment"
+OEM_SCRIPT="/usr/share/oem/bin/coreos-setup-environment"
 if [ -x "${OEM_SCRIPT}" ]; then
 	echo "Found oem coreos-setup-environment, using that"
 	exec ${OEM_SCRIPT} ${ENV}
