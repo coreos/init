@@ -7,10 +7,17 @@ After=coreos-setup-environment.service
 RequiresMountsFor=/usr/share/oem
 ConditionPathExists=/usr/share/oem/cloud-config.yml
 
+# We use this to start etcd, since cloudinit will reconfigure etcd
+Wants=etcd.service
+After=etcd.service
+
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/environment
 ExecStart=/usr/bin/coreos-cloudinit --from-file=/usr/share/oem/cloud-config.yml
+
+# This is because cloudinit will modify /etc/systemd/system/etcd.service.d/
+ExecStartPost=/usr/bin/systemctl daemon-reload
 
 [Install]
 WantedBy=multi-user.target
