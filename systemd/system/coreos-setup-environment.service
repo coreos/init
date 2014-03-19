@@ -1,6 +1,9 @@
 [Unit]
 Description=Modifies /etc/environment for CoreOS
+# this script will check for an oem version of this script
 RequiresMountsFor=/usr/share/oem
+# we only want this to work on usr images
+ConditionPathIsMountPoint=/usr
 
 [Service]
 Type=oneshot
