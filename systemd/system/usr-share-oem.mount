@@ -13,4 +13,3 @@ What=/dev/disk/by-label/OEM
 Where=/usr/share/oem
 Options=nodev,commit=600
 Type=ext4
-FsckPassNo=0
