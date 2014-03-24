@@ -1,13 +1,3 @@
-# Force protocol v2 only
-Protocol 2
-
-# /etc is read-only.  Fetch keys from stateful partition
-# Not using v1, so no v1 key
-HostKey /etc/ssh/ssh_host_rsa_key
-HostKey /etc/ssh/ssh_host_dsa_key
-
-PasswordAuthentication no
-UsePAM yes
-PrintMotd no
-PrintLastLog no
+# Use most defaults for sshd configuration.
+UsePrivilegeSeparation sandbox
 Subsystem sftp internal-sftp
