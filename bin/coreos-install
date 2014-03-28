@@ -138,7 +138,7 @@ if [[ -z "${DEVICE}" ]]; then
     exit 1
 fi
 
-if ! [[ $(lsblk -n -d -o TYPE "${DEVICE}") =~ ^(disk|loop)$ ]]; then
+if ! [[ $(lsblk -n -d -o TYPE "${DEVICE}") =~ ^(disk|loop|lvm)$ ]]; then
     echo "$0: Target block device (${DEVICE}) is not a full disk." >&2
     exit 1
 fi
