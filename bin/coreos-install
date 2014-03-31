@@ -164,12 +164,12 @@ BASE_URL="http://storage.core-os.net/coreos/amd64-usr/${VERSION_ID}"
 IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
 DIGESTS_URL="${BASE_URL}/${DIGESTS_NAME}"
 
-if ! curl -s --fail --head "${IMAGE_URL}" >/dev/null; then
+if ! wget --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
     exit 1
 fi
 
-if ! curl -s --fail --head "${DIGESTS_URL}" >/dev/null; then
+if ! wget --spider --quiet "${DIGESTS_URL}"; then
     echo "$0: Image signature unavailable: $DIGESTS_URL" >&2
     exit 1
 fi
@@ -184,7 +184,7 @@ mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
 echo "Downloading and verifying ${IMAGE_NAME}..."
-curl -s --fail "${DIGESTS_URL}" -o "${WORKDIR}/${DIGESTS_NAME}"
+wget --no-verbose -O "${WORKDIR}/${DIGESTS_NAME}" "${DIGESTS_URL}"
 if ! gpg --batch --trusted-key "${GPG_LONG_ID}" \
     --verify "${WORKDIR}/${DIGESTS_NAME}"
 then
@@ -192,7 +192,7 @@ then
     exit 1
 fi
 
-curl --fail "${IMAGE_URL}" -o "${WORKDIR}/${IMAGE_NAME}"
+wget -O "${WORKDIR}/${IMAGE_NAME}" "${IMAGE_URL}"
 
 # DIGESTS may include README and other extra files we don't need, filter them.
 # Also filter one hash at a time, not required but avoids warnings from *sum.
