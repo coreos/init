@@ -21,11 +21,6 @@ if [[ -e /etc/oem-release ]]; then
     eval "$(sed -e 's/^/OEM_/' /etc/oem-release)"
 fi
 
-# Only use the current OEM as the default if it isn't PXE
-if [[ "${OEM_ID}" == pxe ]]; then
-    OEM_ID=""
-fi
-
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
     -d DEVICE   Install CoreOS to the given device.
