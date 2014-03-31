@@ -8,28 +8,25 @@ set -e -o pipefail
 # Everything we do should be user-access only!
 umask 077
 
-if grep -q ^COREOS_RELEASE_VERSION /etc/lsb-release; then
-    source /etc/lsb-release
+if grep -q "^ID=coreos$" /etc/os-release; then
+    source /etc/os-release
 fi
 
-# Fall back on dev-channel if lsb-release isn't useful
-VERSION="${COREOS_RELEASE_VERSION:-dev-channel}"
+# Fall back on alpha if os-release isn't useful
+: ${VERSION_ID:=alpha}
 
-if [[ -s /usr/share/oem/oem-release ]]; then
-    OEM=$(< /usr/share/oem/oem-release)
-    # Only use the current OEM as the default if it isn't PXE
-    if [[ "${OEM}" == pxe ]]; then
-        OEM=
-    fi
-else
-    OEM=
+OEM_ID=
+if [[ -e /etc/oem-release ]]; then
+    # Pull in OEM information too, but prefixing variables with OEM_
+    eval "$(sed -e 's/^/OEM_/' /etc/oem-release)"
 fi
 
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
     -d DEVICE   Install CoreOS to the given device.
-    -V VERSION  Version to install (e.g. dev-channel) [default: ${VERSION}]
-    -o OEM      OEM image type to install (e.g. ami) [default: ${OEM:-(none)}]
+    -V VERSION  Version to install (e.g. alpha) [default: ${VERSION_ID}]
+    -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
+    -c CLOUD    Insert a cloud-init config to be executed on boot.
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
     -h          This ;-)
@@ -118,13 +115,15 @@ BeiJ6tEeDHDzdA==
 "
 
 DEVICE=""
+CLOUDINIT=""
 
-while getopts "V:d:o:t:vh" OPTION
+while getopts "V:d:o:c:t:vh" OPTION
 do
     case $OPTION in
-        V) VERSION="$OPTARG" ;;
+        V) VERSION_ID="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
-        o) OEM="$OPTARG" ;;
+        o) OEM_ID="$OPTARG" ;;
+        c) CLOUDINIT="$OPTARG" ;;
         t) export TMPDIR="$OPTARG" ;;
         v) set -x ;;
         h) echo "$USAGE"; exit;;
@@ -138,7 +137,7 @@ if [[ -z "${DEVICE}" ]]; then
     exit 1
 fi
 
-if ! [[ $(lsblk -n -d -o TYPE "${DEVICE}") =~ ^(disk|loop)$ ]]; then
+if ! [[ $(lsblk -n -d -o TYPE "${DEVICE}") =~ ^(disk|loop|lvm)$ ]]; then
     echo "$0: Target block device (${DEVICE}) is not a full disk." >&2
     exit 1
 fi
@@ -148,23 +147,29 @@ if [[ ! -w "${DEVICE}" ]]; then
     exit 1
 fi
 
-# Append a trailing underscore to build the URL
-FLAVOR=
-if [ -n "${OEM}" ]; then
-  FLAVOR="${OEM}_"
+if [[ -n "${CLOUDINIT}" && ! -f "${CLOUDINIT}" ]]; then
+    echo "$0: Cloud config file (${CLOUDINIT}) does not exist." >&2
+    exit 1
 fi
 
-IMAGE_URL="http://storage.core-os.net/coreos/amd64-generic/${VERSION}/coreos_production_${FLAVOR}image.bin.bz2"
-DIGESTS_URL="${IMAGE_URL}.DIGESTS.asc"
-IMAGE_NAME="${IMAGE_URL##*/}"
-DIGESTS_NAME="${DIGESTS_URL##*/}"
+if [[ -n "${OEM_ID}" ]]; then
+    IMAGE_NAME="coreos_production_${OEM_ID}_image.bin.bz2"
+    DIGESTS_NAME="coreos_production_${OEM_ID}.DIGESTS.asc"
+else
+    IMAGE_NAME="coreos_production_image.bin.bz2"
+    DIGESTS_NAME="${IMAGE_NAME}.DIGESTS.asc"
+fi
 
-if ! curl -s --fail --head "${IMAGE_URL}" >/dev/null; then
+BASE_URL="http://storage.core-os.net/coreos/amd64-usr/${VERSION_ID}"
+IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
+DIGESTS_URL="${BASE_URL}/${DIGESTS_NAME}"
+
+if ! wget --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
     exit 1
 fi
 
-if ! curl -s --fail --head "${DIGESTS_URL}" >/dev/null; then
+if ! wget --spider --quiet "${DIGESTS_URL}"; then
     echo "$0: Image signature unavailable: $DIGESTS_URL" >&2
     exit 1
 fi
@@ -179,7 +184,7 @@ mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
 echo "Downloading and verifying ${IMAGE_NAME}..."
-curl -s --fail "${DIGESTS_URL}" -o "${WORKDIR}/${DIGESTS_NAME}"
+wget --no-verbose -O "${WORKDIR}/${DIGESTS_NAME}" "${DIGESTS_URL}"
 if ! gpg --batch --trusted-key "${GPG_LONG_ID}" \
     --verify "${WORKDIR}/${DIGESTS_NAME}"
 then
@@ -187,7 +192,7 @@ then
     exit 1
 fi
 
-curl --fail "${IMAGE_URL}" -o "${WORKDIR}/${IMAGE_NAME}"
+wget -O "${WORKDIR}/${IMAGE_NAME}" "${IMAGE_URL}"
 
 # DIGESTS may include README and other extra files we don't need, filter them.
 # Also filter one hash at a time, not required but avoids warnings from *sum.
@@ -201,9 +206,31 @@ echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
 bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
 # inform the OS of partition table changes
-partprobe
+partprobe "${DEVICE}"
+
+if [[ -n "${CLOUDINIT}" ]]; then
+    # The ROOT partition should be #9 but make no assumptions here!
+    # Also don't mount by label directly in case other devices conflict.
+    ROOT_DEV=$(lsblk -rp -o name,partlabel "${DEVICE}"  | \
+               awk '$2 == "ROOT" {print $1; exit}')
+
+    if [[ -z "${ROOT_DEV}" ]]; then
+        echo "Unable to find new ROOT partition on ${DEVICE}" >&2
+        exit 1
+    fi
+
+    echo "Installing cloud-config..."
+    mkdir -p "${WORKDIR}/rootfs"
+    mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs"
+    trap "umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
+
+    mkdir -p "${WORKDIR}/rootfs/var/lib/coreos-install"
+    cp "${CLOUDINIT}" "${WORKDIR}/rootfs/var/lib/coreos-install/user_data"
+
+    umount "${WORKDIR}/rootfs"
+fi
 
 rm -rf "${WORKDIR}"
 trap - EXIT
 
-echo "Success! CoreOS ${VERSION}${OEM:+ (${OEM})} is installed on ${DEVICE}"
+echo "Success! CoreOS ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
