@@ -8,8 +8,8 @@ fi
 
 # Load ssh keys if available
 if [ -f "$ADDON_PATH/authorized_keys" ]; then
+    echo "Warning: Loading $ADDON_PATH/authorized_keys is deprecated!" >&2
+    echo "Warning: Please switch to using cloud config instead." >&2
     ADDON_NAME=$(basename "$ADDON_PATH")
     update-ssh-keys -a "$ADDON_NAME" "$ADDON_PATH/authorized_keys"
 fi
-
-# Anything else we should do?

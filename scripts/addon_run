@@ -5,10 +5,11 @@ if [ -z "$ADDON_PATH" ]; then
     echo "$0: missing addon path" >&2
     exit 1
 elif [ -x "$ADDON_PATH/run" ]; then
+    echo "Warning: Executing $ADDON_PATH/run is deprecated!" >&2
+    echo "Warning: Please switch to using cloud config instead." >&2
     exec "$ADDON_PATH/run"
 elif [ -x "$ADDON_PATH/run.sh" ]; then
+    echo "Warning: Executing $ADDON_PATH/run.sh is deprecated!" >&2
+    echo "Warning: Please switch to using cloud config instead." >&2
     exec "$ADDON_PATH/run.sh"
-else
-    echo "$0: $ADDON_PATH/run not executable" >&2
-    exit 1
 fi
