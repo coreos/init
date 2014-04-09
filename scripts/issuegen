@@ -11,9 +11,14 @@ print_issue() {
     echo
 }
 
-mkdir -p /run/issue.d
-for eth in "$@"; do
-    echo "${eth}: \\4{${eth}} \\6{${eth}}" > "/run/issue.d/${eth}"
-done
+case "$1" in
+    add)
+        mkdir -p /run/issue.d
+        echo "${2}: \\4{${2}} \\6{${2}}" > "/run/issue.d/${2}"
+        ;;
+    remove)
+        rm -f "/run/issue.d/${2}"
+        ;;
+esac
 
 print_issue > /run/issue
