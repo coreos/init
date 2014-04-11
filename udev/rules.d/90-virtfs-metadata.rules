@@ -1,0 +1,2 @@
+# legacy 'metadata' virtfs volume used by old QEMU scripts and libvirt docs
+SUBSYSTEM=="virtio", DRIVER=="9pnet_virtio", ATTR{mount_tag}=="metadata", TAG+="systemd", ENV{SYSTEMD_WANTS}+="virtfs@metadata.service"
