@@ -1,9 +1,7 @@
 [Unit]
 Description=Generate sshd host keys
-DefaultDependencies=no
 Before=sshd.service
-Before=sshd.socket
-After=local-fs.target
+Before=sshd@.service
 
 [Service]
 Type=oneshot
