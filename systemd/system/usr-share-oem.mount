@@ -7,6 +7,7 @@ Before=local-fs.target umount.target
 ConditionKernelCommandLine=!root=squashfs:
 ConditionKernelCommandLine=!root=squashfs
 ConditionVirtualization=!container
+ConditionPathExists=!/usr/.noupdate
 
 [Mount]
 What=/dev/disk/by-label/OEM

@@ -2,3 +2,4 @@
 ConditionKernelCommandLine=!root=squashfs:
 ConditionKernelCommandLine=!root=squashfs
 ConditionVirtualization=!container
+ConditionPathExists=!/usr/.noupdate
