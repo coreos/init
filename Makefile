@@ -10,7 +10,7 @@ test:
 test-root:
 	$(MAKE) -C tests test-root
 
-common:
+install:
 	install -m 755 -d \
 		$(DESTDIR)/lib/udev/rules.d \
 		$(DESTDIR)/usr/bin \
@@ -20,7 +20,7 @@ common:
 		$(DESTDIR)/usr/lib/systemd/system-generators \
 		$(DESTDIR)/usr/lib/tmpfiles.d \
 		$(DESTDIR)/etc/env.d \
-		$(DESTDIR)/etc/ssh
+		$(DESTDIR)/usr/share/ssh
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
 	install -m 644 systemd/system/* $(DESTDIR)/usr/lib/systemd/system
@@ -29,20 +29,11 @@ common:
 		$(DESTDIR)/usr/lib/systemd/system-generators
 	install -m 644 udev/rules.d/* $(DESTDIR)/lib/udev/rules.d
 	install -m 644 configs/editor.sh $(DESTDIR)/etc/env.d/99editor
+	install -m 600 configs/sshd_config $(DESTDIR)/usr/share/ssh/
+	install -m 644 configs/ssh_config $(DESTDIR)/usr/share/ssh/
+	install -m 644 configs/tmpfiles.d/* $(DESTDIR)/usr/lib/tmpfiles.d/
 	ln -sf ../run/issue $(DESTDIR)/etc/issue
 
-install: common
-	install -m 644 -T configs/tmpfiles.conf \
-		$(DESTDIR)/usr/lib/tmpfiles.d/coreos-init.conf
-	install -m 644 configs/ssh_config $(DESTDIR)/etc/ssh
-	install -m 600 configs/sshd_config $(DESTDIR)/etc/ssh
+install-usr: install
 
-install-usr: common
-	install -m 755 -d \
-		$(DESTDIR)/usr/share/ssh
-	install -m 644 configs-usr/tmpfiles.d/* $(DESTDIR)/usr/lib/tmpfiles.d/
-	install -m 644 configs-usr/ssh_config $(DESTDIR)/usr/share/ssh/
-	install -m 600 configs-usr/sshd_config $(DESTDIR)/usr/share/ssh/
-	install -m 755 scripts-usr/* $(DESTDIR)/usr/lib/coreos
-
-.PHONY: common install-usr install
+.PHONY: all test test-root install-usr install
