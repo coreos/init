@@ -28,7 +28,7 @@ for dev_info in "${DEV_LIST[@]}"; do
     fi
 
     # map the device name to the btrfs device id
-    device_id=$(btrfs filesystem show "${MOUNTPOINT}" | \
+    device_id=$(btrfs filesystem show -d "${device}" | \
                 awk -v "d=${device}" -e 'd == $8 {print $2}')
     btrfs filesystem resize "${device_id}:max" "${MOUNTPOINT}"
 done
