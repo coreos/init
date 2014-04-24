@@ -1,18 +1,8 @@
 [Unit]
 Description=CoreOS essentials
-# Filesystems!
-Wants=resize-state.service
 Wants=issuegen.service
-Wants=home.mount
-Wants=media-state.mount
 Wants=media.mount
-Wants=opt.mount
-Wants=srv.mount
-Wants=tmp.mount
 Wants=usr-share-oem.mount
-Wants=var-lock.mount
-Wants=var-run.mount
-Wants=var.mount
 
 [Install]
 WantedBy=basic.target

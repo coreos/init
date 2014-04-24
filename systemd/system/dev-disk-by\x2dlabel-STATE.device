@@ -1,7 +1,0 @@
-[Unit]
-ConditionKernelCommandLine=!state=tmpfs:
-ConditionKernelCommandLine=!state=tmpfs
-ConditionVirtualization=!container
-
-# TODO(philips): remove once everyone is amd64-usr
-ConditionPathIsMountPoint=!/usr

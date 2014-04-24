@@ -1,3 +1,0 @@
-# Use most defaults for sshd configuration.
-UsePrivilegeSeparation sandbox
-Subsystem sftp internal-sftp
