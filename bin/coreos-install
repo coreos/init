@@ -154,23 +154,22 @@ fi
 
 if [[ -n "${OEM_ID}" ]]; then
     IMAGE_NAME="coreos_production_${OEM_ID}_image.bin.bz2"
-    DIGESTS_NAME="coreos_production_${OEM_ID}.DIGESTS.asc"
 else
     IMAGE_NAME="coreos_production_image.bin.bz2"
-    DIGESTS_NAME="${IMAGE_NAME}.DIGESTS.asc"
 fi
 
 BASE_URL="http://storage.core-os.net/coreos/amd64-usr/${VERSION_ID}"
 IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
-DIGESTS_URL="${BASE_URL}/${DIGESTS_NAME}"
+SIG_NAME="${IMAGE_NAME}.sig"
+SIG_URL="${BASE_URL}/${SIG_NAME}"
 
 if ! wget --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
     exit 1
 fi
 
-if ! wget --spider --quiet "${DIGESTS_URL}"; then
-    echo "$0: Image signature unavailable: $DIGESTS_URL" >&2
+if ! wget --spider --quiet "${SIG_URL}"; then
+    echo "$0: Image signature unavailable: $SIG_URL" >&2
     exit 1
 fi
 
@@ -184,23 +183,14 @@ mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
 echo "Downloading and verifying ${IMAGE_NAME}..."
-wget --no-verbose -O "${WORKDIR}/${DIGESTS_NAME}" "${DIGESTS_URL}"
+wget -O "${WORKDIR}/${IMAGE_NAME}" "${IMAGE_URL}"
+wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
 if ! gpg --batch --trusted-key "${GPG_LONG_ID}" \
-    --verify "${WORKDIR}/${DIGESTS_NAME}"
+    --verify "${WORKDIR}/${SIG_NAME}"
 then
-    echo "$0: GPG signature verification failed for ${DIGESTS_NAME}" >&2
+    echo "$0: GPG signature verification failed for ${IMAGE_NAME}" >&2
     exit 1
 fi
-
-wget -O "${WORKDIR}/${IMAGE_NAME}" "${IMAGE_URL}"
-
-# DIGESTS may include README and other extra files we don't need, filter them.
-# Also filter one hash at a time, not required but avoids warnings from *sum.
-for sum in sha1 sha512; do
-    (cd "${WORKDIR}"
-    grep -i -A1 "^# ${sum} HASH$" "${WORKDIR}/${DIGESTS_NAME}" \
-        | grep "${IMAGE_NAME}$" | ${sum}sum -c /dev/stdin)
-done
 
 echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
 bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
