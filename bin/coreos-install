@@ -196,7 +196,10 @@ echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
 bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
 # inform the OS of partition table changes
-partprobe "${DEVICE}"
+# this will *always* generate warnings, so make them go away.
+partprobe "${DEVICE}" 2>&1 | grep -v \
+    -e "^Error: The backup GPT table is not at the end of the disk" \
+    -e "^Warning: Not all of the space available"
 
 if [[ -n "${CLOUDINIT}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
