@@ -5,8 +5,8 @@
 # found in the LICENSE file.
 
 # We want to grab the GROUP variable
-source /usr/share/coreos/update.conf
-source /etc/coreos/update.conf
+[ -e /usr/share/coreos/update.conf ] && source /usr/share/coreos/update.conf
+[ -e /etc/coreos/update.conf ] && source /etc/coreos/update.conf
 
 gen() {
 	mkdir -p /run/coreos
