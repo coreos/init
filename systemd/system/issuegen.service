@@ -1,7 +1,6 @@
 [Unit]
 Description=Generate /run/issue
-DefaultDependencies=no
-RequiresMountsFor=/run
+Before=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
