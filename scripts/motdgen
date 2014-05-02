@@ -4,9 +4,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# We want to grab the GROUP variable
+source /usr/share/coreos/update.conf
+source /etc/coreos/update.conf
+
 gen() {
 	mkdir -p /run/coreos
-	echo -e "Core\033[38;5;45mO\033[38;5;206mS\033[39m (alpha)" > /run/coreos/motd
+	echo -e "Core\033[38;5;45mO\033[38;5;206mS\033[39m (${GROUP})" > /run/coreos/motd
 
 	systemctl is-active locksmithd > /dev/null
 	if [ $? -ne 0 ]; then
