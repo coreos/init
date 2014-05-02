@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Copyright (c) 2014 The CoreOS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+gen() {
+	mkdir -p /run/coreos
+	echo -e "Core\033[38;5;45mO\033[38;5;206mS\033[39m (alpha)" > /run/coreos/motd
+
+	systemctl is-active locksmithd > /dev/null
+	if [ $? -ne 0 ]; then
+		echo "Update Strategy: No Reboots" >> /run/coreos/motd
+	fi
+
+	systemctl list-units --state=failed --no-legend > /run/coreos/motd-failed
+	count=$(cat /run/coreos/motd-failed | wc -l)
+	if [ ${count} -ne 0 ]; then
+		echo "Failed Units: ${count}" >> /run/coreos/motd
+		cat /run/coreos/motd-failed | awk '{ print "  " $1 }' >> /run/coreos/motd
+	fi
+}
+
+gen
+
+dbus-send --system --dest=org.freedesktop.systemd1.Manager \
+	/org/freedesktop/systemd1 \
+	org.freedesktop.systemd1.Manager.Subscribe
+
+filter="type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged'"
+dbus-monitor --system ${filter} |
+while read -r line; do
+	echo ${line} | egrep 'variant string "(failed|active)"' > /dev/null && gen
+done
