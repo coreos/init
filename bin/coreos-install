@@ -199,7 +199,8 @@ bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 # this will *always* generate warnings, so make them go away.
 partprobe "${DEVICE}" 2>&1 | grep -v \
     -e "^Error: The backup GPT table is not at the end of the disk" \
-    -e "^Warning: Not all of the space available"
+    -e "^Warning: Not all of the space available" \
+    || true # It is perfectly OK for grep to exit with non-zero here.
 
 if [[ -n "${CLOUDINIT}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
