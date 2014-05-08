@@ -1,8 +1,0 @@
-[Unit]
-Description=CoreOS essentials
-Wants=issuegen.service
-Wants=media.mount
-Wants=usr-share-oem.mount
-
-[Install]
-WantedBy=basic.target
