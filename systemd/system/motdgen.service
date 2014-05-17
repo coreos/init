@@ -3,4 +3,5 @@ Description=Generate /run/coreos/motd
 Before=systemd-user-sessions.service
 
 [Service]
+Type=oneshot
 ExecStart=/usr/lib/coreos/motdgen
