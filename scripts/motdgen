@@ -11,7 +11,7 @@
 mkdir -p /run/coreos
 echo -e "Core\033[38;5;45mO\033[38;5;206mS\033[39m (${GROUP})" > /run/coreos/motd
 
-if systemctl is-active locksmithd > /dev/null; then
+if ! systemctl is-active locksmithd > /dev/null; then
 	echo -e "Update Strategy: \033[31mNo Reboots\033[39m" >> /run/coreos/motd
 fi
 
