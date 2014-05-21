@@ -121,7 +121,7 @@ BeiJ6tEeDHDzdA==
 DEVICE=""
 CLOUDINIT=""
 
-while getopts "V:d:o:c:t:vh" OPTION
+while getopts "V:C:d:o:c:t:vh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG" ;;
