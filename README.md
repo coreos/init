@@ -17,7 +17,7 @@ The coreos-base/coreos-init ebuild handles the install process.
 Important Steps
 ---------------
 
-A few notes on things that must happen which are unique to Core OS.
+A few notes on things that must happen which are unique to CoreOS.
 
   * resize btrfs: Support easy VM growth by checking
     if there is unused space at the end of the disk and expanding the
