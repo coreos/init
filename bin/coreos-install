@@ -10,10 +10,13 @@ umask 077
 
 if grep -q "^ID=coreos$" /etc/os-release; then
     source /etc/os-release
+    [[ -f /usr/share/coreos/update.conf ]] && source /usr/share/coreos/update.conf
+    [[ -f /etc/coreos/update.conf ]] && source /etc/coreos/update.conf
 fi
 
-# Fall back on alpha if os-release isn't useful
-: ${VERSION_ID:=alpha}
+# Fall back on the current beta if os-release isn't useful
+: ${VERSION_ID:=current}
+CHANNEL_ID=${GROUP:-beta}
 
 OEM_ID=
 if [[ -e /etc/oem-release ]]; then
@@ -24,7 +27,8 @@ fi
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
     -d DEVICE   Install CoreOS to the given device.
-    -V VERSION  Version to install (e.g. alpha) [default: ${VERSION_ID}]
+    -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
+    -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}]
     -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
     -c CLOUD    Insert a cloud-init config to be executed on boot.
     -t TMPDIR   Temporary location with enough space to download images.
@@ -121,6 +125,7 @@ while getopts "V:d:o:c:t:vh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG" ;;
+        C) CHANNEL_ID="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
         o) OEM_ID="$OPTARG" ;;
         c) CLOUDINIT="$OPTARG" ;;
@@ -158,7 +163,7 @@ else
     IMAGE_NAME="coreos_production_image.bin.bz2"
 fi
 
-BASE_URL="http://storage.core-os.net/coreos/amd64-usr/${VERSION_ID}"
+BASE_URL="http://${CHANNEL_ID}.release.core-os.net/amd64-usr/${VERSION_ID}"
 IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
 SIG_URL="${BASE_URL}/${SIG_NAME}"
@@ -196,17 +201,12 @@ echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
 bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
 # inform the OS of partition table changes
-# this will *always* generate warnings, so make them go away.
-partprobe "${DEVICE}" 2>&1 | grep -v \
-    -e "^Error: The backup GPT table is not at the end of the disk" \
-    -e "^Warning: Not all of the space available" \
-    || true # It is perfectly OK for grep to exit with non-zero here.
+blockdev --rereadpt "${DEVICE}"
 
 if [[ -n "${CLOUDINIT}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
     # Also don't mount by label directly in case other devices conflict.
-    ROOT_DEV=$(lsblk -rp -o name,partlabel "${DEVICE}"  | \
-               awk '$2 == "ROOT" {print $1; exit}')
+    ROOT_DEV=$(blkid -t "LABEL=ROOT" -o device "${DEVICE}"*)
 
     if [[ -z "${ROOT_DEV}" ]]; then
         echo "Unable to find new ROOT partition on ${DEVICE}" >&2
