@@ -3,3 +3,4 @@ Description=Generate /run/coreos/motd
 
 [Timer]
 OnUnitActiveSec=60
+OnBootSec=0
