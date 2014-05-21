@@ -227,4 +227,4 @@ fi
 rm -rf "${WORKDIR}"
 trap - EXIT
 
-echo "Success! CoreOS ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
+echo "Success! CoreOS ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
