@@ -163,6 +163,12 @@ else
     IMAGE_NAME="coreos_production_image.bin.bz2"
 fi
 
+# for compatibility with old versions that didn't support channels
+if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
+    CHANNEL_ID="${VERSION_ID}"
+    VERSION_ID="current"
+fi
+
 BASE_URL="http://${CHANNEL_ID}.release.core-os.net/amd64-usr/${VERSION_ID}"
 IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
