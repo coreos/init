@@ -1,6 +1,7 @@
 [Unit]
 Description=Generate /run/coreos/motd
 Before=systemd-user-sessions.service
+After=locksmithd.service
 
 [Service]
 Type=oneshot
