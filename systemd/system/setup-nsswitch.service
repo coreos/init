@@ -1,0 +1,9 @@
+[Unit]
+Description=Create /etc/nsswitch.conf
+Before=local-fs-pre.target systemd-tmpfiles-setup.service
+DefaultDependencies=no
+ConditionPathExists=!/etc/nsswitch.conf
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ln -s ../usr/share/baselayout/nsswitch.conf /etc/nsswitch.conf
