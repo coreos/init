@@ -1,7 +1,7 @@
 [Unit]
 Description=Generate ld.so.cache
 DefaultDependencies=false
-After=local-fs.target
+After=local-fs.target systemd-tmpfiles-setup.service
 Before=sysinit.target
 ConditionPathIsReadWrite=/etc
 
