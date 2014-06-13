@@ -13,7 +13,7 @@ fi
 
 USAGE="Usage: $0 [-l] [-u user] [-a name file1... | -d name]
 Options:
-    -u USER     Update the given user's authorized_key's file [${UPDATE_USER}]
+    -u USER     Update the given user's authorized_keys file [${UPDATE_USER}]
     -a NAME     Add the given keys, using the given name to identify them.
     -A NAME     Add the given keys, even if it was disabled with '-D'
     -n          When adding, don't replace an existing key with the given name.
@@ -72,7 +72,7 @@ SSH_DIR="${_TEST_SSH_PATH:-${UPDATE_HOME}/.ssh}"
 umask 077
 
 # If this is the first time this script has run we don't want to wipe out
-# any existing keys, someone might not like unexpectedly loosing access.
+# any existing keys, someone might not like unexpectedly losing access.
 KEYS_DIR="${SSH_DIR}/authorized_keys.d"
 if [[ ! -d "${KEYS_DIR}" ]]; then
     mkdir -p "${KEYS_DIR}"
