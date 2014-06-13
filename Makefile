@@ -23,7 +23,6 @@ install:
 		$(DESTDIR)/usr/share/ssh
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
-	install -m 644 systemd/system/* $(DESTDIR)/usr/lib/systemd/system
 	install -m 644 systemd/network/* $(DESTDIR)/usr/lib/systemd/network
 	install -m 755 systemd/system-generators/* \
 		$(DESTDIR)/usr/lib/systemd/system-generators
@@ -32,6 +31,7 @@ install:
 	install -m 600 configs/sshd_config $(DESTDIR)/usr/share/ssh/
 	install -m 644 configs/ssh_config $(DESTDIR)/usr/share/ssh/
 	install -m 644 configs/tmpfiles.d/* $(DESTDIR)/usr/lib/tmpfiles.d/
+	cp -a systemd/system/* $(DESTDIR)/usr/lib/systemd/system
 	ln -sf ../run/issue $(DESTDIR)/etc/issue
 
 install-usr: install
