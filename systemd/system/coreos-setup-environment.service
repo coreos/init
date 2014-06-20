@@ -1,14 +1,12 @@
 [Unit]
 Description=Modifies /etc/environment for CoreOS
-# this script will check for an oem version of this script
 RequiresMountsFor=/usr/share/oem
-# we only want this to work on usr images
-ConditionPathIsMountPoint=/usr
+ConditionPathExists=/usr/share/oem/bin/coreos-setup-environment
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/coreos-setup-environment /etc/environment
+ExecStart=/usr/share/oem/bin/coreos-setup-environment /etc/environment
 
 [Install]
 WantedBy=multi-user.target
