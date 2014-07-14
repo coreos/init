@@ -3,11 +3,6 @@
 
 [Unit]
 Description=Remount /usr File System
-DefaultDependencies=no
-Conflicts=shutdown.target
-After=systemd-fsck-root.service systemd-remount-fs.service
-Before=local-fs-pre.target local-fs.target shutdown.target
-Wants=local-fs-pre.target
 ConditionVirtualization=!container
 ConditionPathIsMountPoint=/usr
 ConditionPathIsReadWrite=!/usr
