@@ -1,5 +1,5 @@
 [Network]
-DHCP=true
+DHCP=v4
 
 [DHCPv4]
 UseMTU=true
