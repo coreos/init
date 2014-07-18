@@ -4,7 +4,7 @@
 ACTION!="add", GOTO="net_google_compat_end"
 SUBSYSTEM!="net", GOTO="net_google_compat_end"
 DEVPATH!="/devices/pci0000:00/0000:00:04.0/virtio1/net/*", GOTO="net_google_compat_end"
-ATTR{dmi/id/sys_vendor}!="Google", GOTO="net_google_compat_end"
+ATTR{[dmi/id]sys_vendor}!="Google", GOTO="net_google_compat_end"
 
 ENV{ID_NET_NAME}="ens4v1"
 ENV{ID_NET_NAME_PATH}="enp0s4v1"
