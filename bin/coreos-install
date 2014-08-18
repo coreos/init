@@ -193,18 +193,23 @@ export GNUPGHOME="${WORKDIR}/gnupg"
 mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
-echo "Downloading and verifying ${IMAGE_NAME}..."
-wget -O "${WORKDIR}/${IMAGE_NAME}" "${IMAGE_URL}"
+echo "Downloading the signature for ${IMAGE_URL}..."
 wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
-if ! gpg --batch --trusted-key "${GPG_LONG_ID}" \
-    --verify "${WORKDIR}/${SIG_NAME}"
+
+echo "Downloading, writing and verifying ${IMAGE_NAME}..."
+declare -a EEND
+if ! wget --no-verbose -O - "${IMAGE_URL}" \
+    | tee >(bunzip2 --stdout >"${DEVICE}") \
+    | gpg --batch --trusted-key "${GPG_LONG_ID}" \
+        --verify "${WORKDIR}/${SIG_NAME}" -
 then
-    echo "$0: GPG signature verification failed for ${IMAGE_NAME}" >&2
+    EEND=(${PIPESTATUS[@]})
+    [ ${EEND[0]} -ne 0 ] && echo "${EEND[0]}: Download of ${IMAGE_NAME} did not complete" >&2
+    [ ${EEND[1]} -ne 0 ] && echo "${EEND[1]}: Cannot expand ${IMAGE_NAME} to ${DEVICE}" >&2
+    [ ${EEND[2]} -ne 0 ] && echo "${EEND[2]}: GPG signature verification failed for ${IMAGE_NAME}" >&2
+    wipefs --all --backup "${DEVICE}"
     exit 1
 fi
-
-echo "Writing ${IMAGE_NAME} to ${DEVICE}..."
-bunzip2 -v --stdout "${WORKDIR}/${IMAGE_NAME}" >"${DEVICE}"
 
 # inform the OS of partition table changes
 blockdev --rereadpt "${DEVICE}"
