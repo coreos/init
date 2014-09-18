@@ -5,6 +5,10 @@
 
 set -e -o pipefail
 
+# Ensure that required executables exist before proceeding
+which wget >/dev/null || exit 1
+which gpg >/dev/null || exit 1
+
 # Everything we do should be user-access only!
 umask 077
 
