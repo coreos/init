@@ -1,0 +1,9 @@
+[Match]
+Virtualization=vmware
+
+[Network]
+DHCP=v4
+
+[DHCP]
+UseMTU=true
+RequestBroadcast=true
