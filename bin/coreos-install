@@ -37,6 +37,7 @@ Options:
     -c CLOUD    Insert a cloud-init config to be executed on boot.
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
+    -b BASEURL  URL to the image mirror
     -h          This ;-)
 
 This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
@@ -169,6 +170,7 @@ do
         c) CLOUDINIT="$OPTARG" ;;
         t) export TMPDIR="$OPTARG" ;;
         v) set -x ;;
+        b) BASE_URL="$OPTARG" ;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
@@ -218,10 +220,12 @@ if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
     VERSION_ID="current"
 fi
 
-BASE_URL="http://${CHANNEL_ID}.release.core-os.net/amd64-usr/${VERSION_ID}"
-IMAGE_URL="${BASE_URL}/${IMAGE_NAME}"
+if [[ -z "${BASE_URL}" ]]; then
+    BASE_URL="http://${CHANNEL_ID}.release.core-os.net/amd64-usr"
+fi
+IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
-SIG_URL="${BASE_URL}/${SIG_NAME}"
+SIG_URL="${BASE_URL}/${VERSION_ID}/${SIG_NAME}"
 
 if ! wget --inet4-only --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
