@@ -190,9 +190,20 @@ if [[ ! -w "${DEVICE}" ]]; then
     exit 1
 fi
 
-if [[ -n "${CLOUDINIT}" && ! -f "${CLOUDINIT}" ]]; then
-    echo "$0: Cloud config file (${CLOUDINIT}) does not exist." >&2
-    exit 1
+if [[ -n "${CLOUDINIT}" ]]; then
+    if [[ ! -f "${CLOUDINIT}" ]]; then
+        echo "$0: Cloud config file (${CLOUDINIT}) does not exist." >&2
+        exit 1
+    fi
+
+    if type -P coreos-cloudinit >/dev/null; then
+        if ! coreos-cloudinit -from-file="${CLOUDINIT}" -validate; then
+            echo "$0: Cloud config file (${CLOUDINIT}) is not valid." >&2
+            exit 1
+        fi
+    else
+        echo "$0: coreos-cloudinit not found. Could not validate config. Continuing..." >&2
+    fi
 fi
 
 if [[ -n "${OEM_ID}" ]]; then
