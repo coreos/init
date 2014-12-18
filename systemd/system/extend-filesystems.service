@@ -1,9 +1,9 @@
 [Unit]
-Description=Resize Btrfs Filesystems
+Description=Extend Filesystems
 ConditionVirtualization=!container
 
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/lib/coreos/resize_btrfs
+ExecStart=/usr/lib/coreos/extend-filesystems
 StandardOutput=journal+console
