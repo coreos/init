@@ -1,0 +1,48 @@
+#!/bin/bash
+# Automatic resize of btrfs and ext4 filesystems.
+#
+# The only partitions that may be considered:
+#  - GPT partitions with the 'coreos-resize'
+#  - Have a btrfs or ext4 filesystem mounted read-write
+#  - Have at least 2MB of unpartitioned space to grow into (cgpt default)
+#
+# This last restriction means that if cgpt resize succeeds in extending
+# the partition but the filesystem resize fails the operation will not
+# be re-attempted by this script later unless the disk grows even more.
+
+set -e -o pipefail
+
+COREOS_RESIZE="3884dd41-8582-4404-b9a8-e9b84f2df50e"
+
+declare -a DEV_LIST
+mapfile DEV_LIST < <(lsblk -P -o NAME,PARTTYPE,FSTYPE,MOUNTPOINT)
+
+for dev_info in "${DEV_LIST[@]}"; do
+    eval "$dev_info"
+    if [[ "${PARTTYPE}" != "${COREOS_RESIZE}" ]] || \
+       [[ -z "${NAME}" ]] || \
+       [[ -z "${MOUNTPOINT}" ]] || \
+       [[ ! -w "${MOUNTPOINT}" ]] || \
+       [[ "${FSTYPE}" != "btrfs" && "${FSTYPE}" != "ext4" ]]
+    then
+        continue
+    fi
+
+    device="/dev/${NAME}"
+    old_size=$(blockdev --getsz "${device}")
+    cgpt resize "${device}"
+
+    # Only resize filesystem if the partition changed
+    if [[ "${old_size}" -eq $(blockdev --getsz "${device}") ]]; then
+        continue
+    fi
+
+    if [[ "${FSTYPE}" == "btrfs" ]]; then
+        # map the device name to the btrfs device id
+        device_id=$(btrfs filesystem show -d "${device}" | \
+                    awk -v "d=${device}" -e 'd == $8 {print $2}')
+        btrfs filesystem resize "${device_id}:max" "${MOUNTPOINT}"
+    elif [[ "${FSTYPE}" == "ext4" ]]; then
+        resize2fs "${device}"
+    fi
+done
