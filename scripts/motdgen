@@ -8,8 +8,10 @@
 [ -e /usr/share/coreos/update.conf ] && source /usr/share/coreos/update.conf
 [ -e /etc/coreos/update.conf ] && source /etc/coreos/update.conf
 
+source /usr/lib/os-release
+
 mkdir -p /run/coreos
-echo -e "Core\033[38;5;206mO\033[38;5;45mS\033[39m (${GROUP})" > /run/coreos/motd
+echo -e "Core\033[38;5;206mO\033[38;5;45mS\033[39m ${GROUP} (${VERSION})" > /run/coreos/motd
 
 if ! systemctl is-active locksmithd > /dev/null; then
 	echo -e "Update Strategy: \033[31mNo Reboots\033[39m" >> /run/coreos/motd
