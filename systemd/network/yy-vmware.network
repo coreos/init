@@ -6,4 +6,5 @@ DHCP=v4
 
 [DHCP]
 UseMTU=true
+UseDomains=true
 RequestBroadcast=true
