@@ -1,5 +1,6 @@
 [Network]
 DHCP=v4
 
-[DHCPv4]
+[DHCP]
 UseMTU=true
+UseDomains=true
