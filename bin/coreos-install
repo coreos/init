@@ -160,7 +160,7 @@ Pg==
 DEVICE=""
 CLOUDINIT=""
 
-while getopts "V:C:d:o:c:t:vh" OPTION
+while getopts "V:C:d:o:c:t:b:vh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG" ;;
