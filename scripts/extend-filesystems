@@ -37,12 +37,15 @@ for dev_info in "${DEV_LIST[@]}"; do
         continue
     fi
 
-    if [[ "${FSTYPE}" == "btrfs" ]]; then
-        # map the device name to the btrfs device id
-        device_id=$(btrfs filesystem show -d "${device}" | \
-                    awk -v "d=${device}" -e 'd == $8 {print $2}')
-        btrfs filesystem resize "${device_id}:max" "${MOUNTPOINT}"
-    elif [[ "${FSTYPE}" == "ext4" ]]; then
-        resize2fs "${device}"
-    fi
+    case "${FSTYPE}" in
+        "btrfs")
+            # map the device name to the btrfs device id
+            device_id=$(btrfs filesystem show -d "${device}" | \
+                        awk -v "d=${device}" -e 'd == $8 {print $2}')
+            btrfs filesystem resize "${device_id}:max" "${MOUNTPOINT}"
+            ;;
+        "ext4")
+            resize2fs "${device}"
+            ;;
+    esac
 done

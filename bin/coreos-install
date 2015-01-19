@@ -279,7 +279,10 @@ if [[ -n "${CLOUDINIT}" ]]; then
 
     echo "Installing cloud-config..."
     mkdir -p "${WORKDIR}/rootfs"
-    mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs"
+    case $(blkid -t "LABEL=ROOT" -o value -s TYPE "${ROOT_DEV}") in
+        "btrfs") mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
+        *)       mount "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
+    esac
     trap "umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
 
     mkdir -p "${WORKDIR}/rootfs/var/lib/coreos-install"
