@@ -4,7 +4,7 @@ set -e
 
 print_issue() {
     echo
-    echo 'This is \n.\O (\s \m \r) \t'
+    echo 'This is \n (\s \m \r) \t'
     for note in /run/issue.d/*; do
         [ -f "${note}" ] && cat "${note}"
     done
