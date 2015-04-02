@@ -1,6 +1,7 @@
 [Unit]
 Description=Generate /run/issue
 Before=systemd-user-sessions.service
+After=sshd-keygen.service
 
 [Service]
 Type=oneshot
