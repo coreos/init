@@ -14,4 +14,3 @@ mkdir -p /run/issue.d
 for KEY_FILE in $(ls ${SSH_DIR}/ssh_host_*_key) ; do
   ssh-keygen -l -f ${KEY_FILE}
 done | awk '{print "SSH host key: " $2 " " $4}' > /run/issue.d/00_ssh_host_keys
-/usr/lib/coreos/issuegen
