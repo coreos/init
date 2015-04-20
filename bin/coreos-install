@@ -38,6 +38,7 @@ Options:
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror
+    -n          Copy generated network units to the root partition.		
     -h          This ;-)
 
 This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
@@ -160,7 +161,7 @@ Pg==
 DEVICE=""
 CLOUDINIT=""
 
-while getopts "V:C:d:o:c:t:b:vh" OPTION
+while getopts "V:C:d:o:c:t:b:nvh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG" ;;
@@ -171,6 +172,7 @@ do
         t) export TMPDIR="$OPTARG" ;;
         v) set -x ;;
         b) BASE_URL="$OPTARG" ;;
+        n) COPY_NET=1;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
@@ -267,7 +269,7 @@ fi
 # inform the OS of partition table changes
 blockdev --rereadpt "${DEVICE}"
 
-if [[ -n "${CLOUDINIT}" ]]; then
+if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
     # Also don't mount by label directly in case other devices conflict.
     ROOT_DEV=$(blkid -t "LABEL=ROOT" -o device "${DEVICE}"*)
@@ -277,16 +279,24 @@ if [[ -n "${CLOUDINIT}" ]]; then
         exit 1
     fi
 
-    echo "Installing cloud-config..."
     mkdir -p "${WORKDIR}/rootfs"
     case $(blkid -t "LABEL=ROOT" -o value -s TYPE "${ROOT_DEV}") in
-        "btrfs") mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
-        *)       mount "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
+      "btrfs") mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
+      *)       mount "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
     esac
     trap "umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
 
-    mkdir -p "${WORKDIR}/rootfs/var/lib/coreos-install"
-    cp "${CLOUDINIT}" "${WORKDIR}/rootfs/var/lib/coreos-install/user_data"
+    if [[ -n "${CLOUDINIT}" ]]; then
+      echo "Installing cloud-config..."
+      mkdir -p "${WORKDIR}/rootfs/var/lib/coreos-install"
+      cp "${CLOUDINIT}" "${WORKDIR}/rootfs/var/lib/coreos-install/user_data"
+    fi
+
+    if [[ -n "${COPY_NET}" ]]; then
+      echo "Copying network units to root partition."
+			# Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file. 
+      cp --recursive --no-clobber --preserve --dereference /run/systemd/network/* "${WORKDIR}/rootfs/etc/systemd/network"
+    fi
 
     umount "${WORKDIR}/rootfs"
 fi
