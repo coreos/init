@@ -1,0 +1,10 @@
+[Unit]
+Description=Boot partition Automount Point
+DefaultDependencies=no
+Before=sysinit.target
+ConditionVirtualization=!container
+ConditionPathExists=!/usr/.noupdate
+
+[Automount]
+Where=/boot
+

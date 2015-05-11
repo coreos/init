@@ -1,0 +1,10 @@
+[Unit]
+Description=Boot partition
+DefaultDependencies=no
+ConditionVirtualization=!container
+ConditionPathExists=!/usr/.noupdate
+
+[Mount]
+What=/dev/disk/by-label/EFI-SYSTEM
+Where=/boot
+
