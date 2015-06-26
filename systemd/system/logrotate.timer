@@ -1,0 +1,7 @@
+[Unit]
+Description=Daily Log Rotation
+
+[Timer]
+OnCalendar=daily
+AccuracySec=1h
+Persistent=true

@@ -28,6 +28,7 @@ install:
 		$(DESTDIR)/usr/lib/systemd/system-generators
 	install -m 644 udev/rules.d/* $(DESTDIR)/lib/udev/rules.d
 	install -m 644 configs/editor.sh $(DESTDIR)/etc/env.d/99editor
+	install -m 644 configs/logrotate.conf $(DESTDIR)/usr/share/logrotate/
 	install -m 600 configs/sshd_config $(DESTDIR)/usr/share/ssh/
 	install -m 644 configs/ssh_config $(DESTDIR)/usr/share/ssh/
 	install -m 644 configs/tmpfiles.d/* $(DESTDIR)/usr/lib/tmpfiles.d/
