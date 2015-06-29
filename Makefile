@@ -20,6 +20,7 @@ install:
 		$(DESTDIR)/usr/lib/systemd/system-generators \
 		$(DESTDIR)/usr/lib/tmpfiles.d \
 		$(DESTDIR)/etc/env.d \
+		$(DESTDIR)/usr/share/logrotate \
 		$(DESTDIR)/usr/share/ssh
 	install -m 755 bin/* $(DESTDIR)/usr/bin
 	install -m 755 scripts/* $(DESTDIR)/usr/lib/coreos
