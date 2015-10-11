@@ -20,7 +20,7 @@ fi
 
 # Fall back on the current beta if os-release isn't useful
 : ${VERSION_ID:=current}
-CHANNEL_ID=${GROUP:-beta}
+CHANNEL_ID=${GROUP:-stable}
 
 OEM_ID=
 if [[ -e /etc/oem-release ]]; then
