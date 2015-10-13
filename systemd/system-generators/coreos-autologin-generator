@@ -12,6 +12,9 @@ fi
 
 # Use the first path provided, the "Normal" target for generators.
 if [[ $# -gt 0 ]]; then
+    TMPDIR="/run" # bash creates temp files in $TMPDIR for heredocs, but /tmp
+                  # isn't a tmpfs yet when system-generators are run, so reuse
+                  # /run.  Otherwise we'll fail if / is in a read-only state.
     DEST="$1"
 fi
 
