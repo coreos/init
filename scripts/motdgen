@@ -22,8 +22,7 @@ if ! systemctl is-active locksmithd > /dev/null; then
 fi
 
 systemctl list-units --state=failed --no-legend > /run/coreos/motd-failed
-count=$(cat /run/coreos/motd-failed | wc -l)
-if [ ${count} -ne 0 ]; then
+if [[ -s /run/coreos/motd-failed ]]; then
 	echo -e "Failed Units: \033[31m${count}\033[39m" >> /run/coreos/motd
 	awk '{ print "  " $1 }' /run/coreos/motd-failed >> /run/coreos/motd
 fi
