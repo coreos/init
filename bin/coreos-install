@@ -18,7 +18,7 @@ if grep -q "^ID=coreos$" /etc/os-release; then
     [[ -f /etc/coreos/update.conf ]] && source /etc/coreos/update.conf
 fi
 
-# Fall back on the current beta if os-release isn't useful
+# Fall back on the current stable if os-release isn't useful
 : ${VERSION_ID:=current}
 CHANNEL_ID=${GROUP:-stable}
 
