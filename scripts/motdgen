@@ -16,13 +16,3 @@ echo -e "Core\033[38;5;206mO\033[38;5;45mS\033[39m ${GROUP} (${VERSION})" > /run
 if [[ -d "/etc/motd.d" ]]; then
 	cat /etc/motd.d/*.conf 2>/dev/null >> /run/coreos/motd || true
 fi
-
-if ! systemctl is-active locksmithd > /dev/null; then
-	echo -e "Update Strategy: \033[31mNo Reboots\033[39m" >> /run/coreos/motd
-fi
-
-systemctl list-units --state=failed --no-legend > /run/coreos/motd-failed
-if [[ -s /run/coreos/motd-failed ]]; then
-	echo -e "Failed Units: \033[31m${count}\033[39m" >> /run/coreos/motd
-	awk '{ print "  " $1 }' /run/coreos/motd-failed >> /run/coreos/motd
-fi
