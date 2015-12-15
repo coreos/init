@@ -15,7 +15,7 @@ set -e -o pipefail
 COREOS_RESIZE="3884dd41-8582-4404-b9a8-e9b84f2df50e"
 
 declare -a DEV_LIST
-mapfile DEV_LIST < <(lsblk -P -o NAME,PARTTYPE,FSTYPE,MOUNTPOINT)
+mapfile DEV_LIST < <(lsblk -P -o NAME,PARTTYPE,FSTYPE,MOUNTPOINT | sed -e 's/cciss!/cciss\//')
 
 for dev_info in "${DEV_LIST[@]}"; do
     eval "$dev_info"
