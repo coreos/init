@@ -19,6 +19,7 @@ mapfile DEV_LIST < <(lsblk -P -o NAME,PARTTYPE,FSTYPE,MOUNTPOINT)
 
 for dev_info in "${DEV_LIST[@]}"; do
     eval "$dev_info"
+    NAME=${NAME//\!//}
     if [[ "${PARTTYPE}" != "${COREOS_RESIZE}" ]] || \
        [[ -z "${NAME}" ]] || \
        [[ -z "${MOUNTPOINT}" ]] || \
