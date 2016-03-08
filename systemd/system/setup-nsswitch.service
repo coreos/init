@@ -1,6 +1,6 @@
 [Unit]
 Description=Create /etc/nsswitch.conf
-Before=local-fs-pre.target systemd-tmpfiles-setup.service
+Before=local-fs-pre.target systemd-tmpfiles-setup.service systemd-sysusers.service
 DefaultDependencies=no
 ConditionPathExists=!/etc/nsswitch.conf
 
