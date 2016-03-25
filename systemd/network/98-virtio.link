@@ -2,5 +2,7 @@
 # Migration will come later but for now preserve the old behavior by the
 # "slot" and "path" name policies.
 [Match]
+Driver=virtio_net
+[Link]
 NamePolicy=kernel database onboard
 MACAddressPolicy=persistent
