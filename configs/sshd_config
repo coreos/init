@@ -3,3 +3,5 @@ UsePrivilegeSeparation sandbox
 Subsystem sftp internal-sftp
 ClientAliveInterval 180
 UseDNS no
+UsePAM yes
+PrintMotd no # handled by PAM
