@@ -2,7 +2,7 @@
 Virtualization=vmware
 
 [Network]
-DHCP=ipv4
+DHCP=yes
 
 [DHCP]
 UseMTU=true
