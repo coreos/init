@@ -299,7 +299,7 @@ if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
 fi
 
 if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="http://${CHANNEL_ID}.release.core-os.net/amd64-usr"
+    BASE_URL="https://${CHANNEL_ID}.release.core-os.net/amd64-usr"
 fi
 IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
