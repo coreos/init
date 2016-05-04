@@ -305,12 +305,12 @@ IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
 SIG_URL="${BASE_URL}/${VERSION_ID}/${SIG_NAME}"
 
-if ! wget --inet4-only --spider --quiet "${IMAGE_URL}"; then
+if ! wget --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
     exit 1
 fi
 
-if ! wget --inet4-only --spider --quiet "${SIG_URL}"; then
+if ! wget --spider --quiet "${SIG_URL}"; then
     echo "$0: Image signature unavailable: $SIG_URL" >&2
     exit 1
 fi
@@ -325,11 +325,11 @@ mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
 echo "Downloading the signature for ${IMAGE_URL}..."
-wget --inet4-only --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
+wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
 
 echo "Downloading, writing and verifying ${IMAGE_NAME}..."
 declare -a EEND
-if ! wget --inet4-only --no-verbose -O - "${IMAGE_URL}" \
+if ! wget --no-verbose -O - "${IMAGE_URL}" \
     | tee >(bunzip2 --stdout >"${DEVICE}") \
     | gpg --batch --trusted-key "${GPG_LONG_ID}" \
         --verify "${WORKDIR}/${SIG_NAME}" -
