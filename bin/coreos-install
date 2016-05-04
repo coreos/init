@@ -39,7 +39,7 @@ Options:
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror
-    -n          Copy generated network units to the root partition.		
+    -n          Copy generated network units to the root partition.
     -h          This ;-)
 
 This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
@@ -370,7 +370,7 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
 
     if [[ -n "${COPY_NET}" ]]; then
       echo "Copying network units to root partition."
-			# Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file. 
+      # Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file.
       cp --recursive --no-clobber --preserve --dereference /run/systemd/network/* "${WORKDIR}/rootfs/etc/systemd/network"
     fi
 
