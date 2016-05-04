@@ -39,7 +39,7 @@ Options:
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror
-    -n          Copy generated network units to the root partition.		
+    -n          Copy generated network units to the root partition.
     -h          This ;-)
 
 This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
@@ -301,16 +301,24 @@ fi
 if [[ -z "${BASE_URL}" ]]; then
     BASE_URL="https://${CHANNEL_ID}.release.core-os.net/amd64-usr"
 fi
+
+# if the version is "current", resolve the actual version number
+if [[ "${VERSION_ID}" == "current" ]]; then
+    VERSION_ID=$(wget --quiet -O - "${BASE_URL}/${VERSION_ID}/version.txt" | \
+        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }')
+    echo "Current version of CoreOS ${CHANNEL_ID} is ${VERSION_ID}"
+fi
+
 IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
 SIG_NAME="${IMAGE_NAME}.sig"
 SIG_URL="${BASE_URL}/${VERSION_ID}/${SIG_NAME}"
 
-if ! wget --inet4-only --spider --quiet "${IMAGE_URL}"; then
+if ! wget --spider --quiet "${IMAGE_URL}"; then
     echo "$0: Image URL unavailable: $IMAGE_URL" >&2
     exit 1
 fi
 
-if ! wget --inet4-only --spider --quiet "${SIG_URL}"; then
+if ! wget --spider --quiet "${SIG_URL}"; then
     echo "$0: Image signature unavailable: $SIG_URL" >&2
     exit 1
 fi
@@ -325,11 +333,11 @@ mkdir "${GNUPGHOME}"
 gpg --batch --quiet --import <<<"$GPG_KEY"
 
 echo "Downloading the signature for ${IMAGE_URL}..."
-wget --inet4-only --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
+wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
 
 echo "Downloading, writing and verifying ${IMAGE_NAME}..."
 declare -a EEND
-if ! wget --inet4-only --no-verbose -O - "${IMAGE_URL}" \
+if ! wget --no-verbose -O - "${IMAGE_URL}" \
     | tee >(bunzip2 --stdout >"${DEVICE}") \
     | gpg --batch --trusted-key "${GPG_LONG_ID}" \
         --verify "${WORKDIR}/${SIG_NAME}" -
@@ -370,7 +378,7 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
 
     if [[ -n "${COPY_NET}" ]]; then
       echo "Copying network units to root partition."
-			# Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file. 
+      # Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file.
       cp --recursive --no-clobber --preserve --dereference /run/systemd/network/* "${WORKDIR}/rootfs/etc/systemd/network"
     fi
 
