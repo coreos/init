@@ -439,7 +439,7 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
 fi
 
 if [[ -n "${IGNITION}" ]]; then
-    # The OEM partition should be #3 but make no assumptions here!
+    # The OEM partition should be #6 but make no assumptions here!
     # Also don't mount by label directly in case other devices conflict.
     OEM_DEV=$(blkid -t "LABEL=OEM" -o device "${DEVICE}"*)
 
@@ -454,7 +454,7 @@ if [[ -n "${IGNITION}" ]]; then
 
     echo "Installing Ignition config ${IGNITION}..."
     cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
-    echo  "set linux_append=\"coreos.config.url=oem:///coreos-install.json"\" > "${WORKDIR}/oemfs/grub.cfg"
+    echo  "set linux_append=\"coreos.config.url=oem:///coreos-install.json\"" > "${WORKDIR}/oemfs/grub.cfg"
 
     umount "${WORKDIR}/oemfs"
     trap "rm -rf '${WORKDIR}'" EXIT
