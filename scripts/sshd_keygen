@@ -4,13 +4,19 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+set -e
+
 SSH_DIR=/etc/ssh
 mkdir -p ${SSH_DIR}
 
-ssh-keygen -A || echo "Failed to generate ssh keys."
+# XXX: For some unknown reason, an older version of this script would generate
+#      empty host keys. Work around this for now by removing zero-sized keys.
+find ${SSH_DIR} -name 'ssh_host_*_key' -size 0 -delete
+
+ssh-keygen -A -v
 
 # Provide key fingerprints via issue
 mkdir -p /run/issue.d
-for KEY_FILE in $(ls ${SSH_DIR}/ssh_host_*_key) ; do
+for KEY_FILE in $(find ${SSH_DIR} -name 'ssh_host_*_key') ; do
   ssh-keygen -l -f ${KEY_FILE}
 done | awk '{print "SSH host key: " $2 " " $4}' > /run/issue.d/00_ssh_host_keys
