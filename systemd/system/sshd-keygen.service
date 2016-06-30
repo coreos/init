@@ -5,5 +5,4 @@ Before=sshd.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-Restart=on-failure
 ExecStart=/usr/lib/coreos/sshd_keygen
