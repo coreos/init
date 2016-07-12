@@ -5,9 +5,13 @@
 
 set -e -o pipefail
 
+error_output() {
+    echo "Error: return code $? from $BASH_COMMAND" >&2
+}
+
 # Ensure that required executables exist before proceeding
-which wget >/dev/null || exit 1
-which gpg >/dev/null || exit 1
+which wget >/dev/null || { echo 'Missing wget!' >&2 ; exit 1 ; }
+which gpg >/dev/null || { echo 'Missing gpg!' >&2 ; exit 1 ; }
 
 # Everything we do should be user-access only!
 umask 077
@@ -377,7 +381,7 @@ fi
 
 # Pre-flight checks pass, lets get this party started!
 WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
-trap "rm -rf '${WORKDIR}'" EXIT
+trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 
 # Setup GnuPG for verifying the image signature
 export GNUPGHOME="${WORKDIR}/gnupg"
@@ -410,17 +414,12 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
     # Also don't mount by label directly in case other devices conflict.
     ROOT_DEV=$(blkid -t "LABEL=ROOT" -o device "${DEVICE}"*)
 
-    if [[ -z "${ROOT_DEV}" ]]; then
-        echo "Unable to find new ROOT partition on ${DEVICE}" >&2
-        exit 1
-    fi
-
     mkdir -p "${WORKDIR}/rootfs"
     case $(blkid -t "LABEL=ROOT" -o value -s TYPE "${ROOT_DEV}") in
       "btrfs") mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
       *)       mount "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
     esac
-    trap "umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
+    trap "error_output ; umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
 
     if [[ -n "${CLOUDINIT}" ]]; then
       echo "Installing cloud-config..."
@@ -435,7 +434,7 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
     fi
 
     umount "${WORKDIR}/rootfs"
-    trap "rm -rf '${WORKDIR}'" EXIT
+    trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 fi
 
 if [[ -n "${IGNITION}" ]]; then
@@ -443,21 +442,16 @@ if [[ -n "${IGNITION}" ]]; then
     # Also don't mount by label directly in case other devices conflict.
     OEM_DEV=$(blkid -t "LABEL=OEM" -o device "${DEVICE}"*)
 
-    if [[ -z "${OEM_DEV}" ]]; then
-      echo "Unable to find new OEM partition on ${DEVICE}" >&2
-      exit 1
-    fi
-
     mkdir -p "${WORKDIR}/oemfs"
     mount "${OEM_DEV}" "${WORKDIR}/oemfs"
-    trap "umount '${WORKDIR}/oemfs' && rm -rf '${WORKDIR}'" EXIT
+    trap "error_output ; umount '${WORKDIR}/oemfs' && rm -rf '${WORKDIR}'" EXIT
 
     echo "Installing Ignition config ${IGNITION}..."
     cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
     echo  "set linux_append=\"coreos.config.url=oem:///coreos-install.json\"" > "${WORKDIR}/oemfs/grub.cfg"
 
     umount "${WORKDIR}/oemfs"
-    trap "rm -rf '${WORKDIR}'" EXIT
+    trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 fi
 
 rm -rf "${WORKDIR}"
