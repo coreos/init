@@ -391,6 +391,11 @@ gpg --batch --quiet --import <<<"$GPG_KEY"
 echo "Downloading the signature for ${IMAGE_URL}..."
 wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
 
+# We are at the point of no return, so wipe disk labels that are missed below.
+# In particular, ZFS writes labels in the last half-MiB of the disk.
+dd if=/dev/zero of="${DEVICE}" count=1024 2>/dev/null \
+    seek=$(($(blockdev --getsz "${DEVICE}") - 1024))
+
 echo "Downloading, writing and verifying ${IMAGE_NAME}..."
 declare -a EEND
 if ! wget --no-verbose -O - "${IMAGE_URL}" \
