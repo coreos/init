@@ -412,7 +412,13 @@ then
 fi
 
 # inform the OS of partition table changes
-blockdev --rereadpt "${DEVICE}"
+udevadm settle
+for try in 0 1 2 4; do
+    sleep "$try"  # Give the device a bit more time on each attempt.
+    blockdev --rereadpt "${DEVICE}" && unset try && break ||
+    echo "Failed to reread partitions on ${DEVICE}" >&2
+done
+[ -z "$try" ] || exit 1
 
 if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
