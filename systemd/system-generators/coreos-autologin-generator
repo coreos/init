@@ -38,6 +38,21 @@ EOF
     fi
 }
 
+# reconfigure emergency.service to autologin as root
+emergency_autologin() {
+    # only autologin if our tty is the active one
+    grep -q "$1$" /sys/class/tty/console/active || return
+
+    local out_dir="${DEST}/emergency.service.d"
+    local out_file="${out_dir}/10-autologin.conf"
+    mkdir -p "${out_dir}"
+    cat << 'EOF' > "${out_file}"
+[Service]
+ExecStart=
+ExecStart=-/bin/sh -c "/usr/bin/login -f root; /usr/bin/systemctl --job-mode=fail --no-block default"
+EOF
+}
+
 autologin() {
     param="$1"
     arg=$(echo "${param}" | awk -F'=' '{print $2}')
@@ -52,6 +67,8 @@ autologin() {
         overlay_unit "getty@.service"
         overlay_unit "serial-getty@.service"
     fi
+
+    emergency_autologin "${arg}"
 }
 
 read -r CMDLINE </proc/cmdline;
