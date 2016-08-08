@@ -6,6 +6,8 @@ SUBSYSTEM!="block", GOTO="cloud_storage_end"
 # Google GCE by-id
 KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="PersistentDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
 KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="PersistentDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
+KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="EphemeralDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
+KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="EphemeralDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
 
 # TODO: Anyone else support friendly names?
 
