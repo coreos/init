@@ -9,8 +9,9 @@ set -e
 SSH_DIR=/etc/ssh
 mkdir -p ${SSH_DIR}
 
-# XXX: For some unknown reason, an older version of this script would generate
-#      empty host keys. Work around this for now by removing zero-sized keys.
+# ssh-keygen doesn't ensure that host keys are valid, merely that they exist.
+# Remove zero-length keys, which can be a result of an unclean filesystem
+# shutdown.
 find ${SSH_DIR} -name 'ssh_host_*_key' -size 0 -delete
 
 ssh-keygen -A -v
