@@ -26,6 +26,10 @@ fi
 : ${VERSION_ID:=current}
 CHANNEL_ID=${GROUP:-stable}
 
+BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
+
+BOARD=${BOARD:-"amd64-usr"}
+
 OEM_ID=
 if [[ -e /etc/oem-release ]]; then
     # Pull in OEM information too, but prefixing variables with OEM_
@@ -36,13 +40,14 @@ USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
     -d DEVICE   Install CoreOS to the given device.
     -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
+    -B BOARD    CoreOS board to use [default: ${BOARD}]
     -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}]
     -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
     -c CLOUD    Insert a cloud-init config to be executed on boot.
     -i IGNITION Insert an Ignition config to be executed on boot.
     -t TMPDIR   Temporary location with enough space to download images.
     -v          Super verbose, for debugging.
-    -b BASEURL  URL to the image mirror
+    -b BASEURL  URL to the image mirror (overrides BOARD)
     -n          Copy generated network units to the root partition.
     -h          This ;-)
 
@@ -285,10 +290,11 @@ K9w3EiyDrgzl0IpotQXxOBGHoCtcxUZvkNeOIxAb8QwkWnhgkljMyQ==
 DEVICE=""
 CLOUDINIT=""
 
-while getopts "V:C:d:o:c:i:t:b:nvh" OPTION
+while getopts "V:B:C:d:o:c:i:t:b:nvh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG" ;;
+        B) BOARD="$OPTARG" ;;
         C) CHANNEL_ID="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
         o) OEM_ID="$OPTARG" ;;
@@ -355,7 +361,7 @@ if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
 fi
 
 if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="https://${CHANNEL_ID}.release.core-os.net/amd64-usr"
+    BASE_URL="https://${CHANNEL_ID}.release.core-os.net/${BOARD}"
 fi
 
 # if the version is "current", resolve the actual version number
