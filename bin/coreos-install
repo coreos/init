@@ -26,7 +26,9 @@ fi
 : ${VERSION_ID:=current}
 CHANNEL_ID=${GROUP:-stable}
 
-BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
+if [[ -e /usr/share/coreos/release ]]; then
+    BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
+fi
 
 BOARD=${BOARD:-"amd64-usr"}
 
