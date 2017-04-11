@@ -467,7 +467,7 @@ if [[ -n "${IGNITION}" ]]; then
 
     echo "Installing Ignition config ${IGNITION}..."
     cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
-    echo  "set linux_append=\"coreos.config.url=oem:///coreos-install.json\"" > "${WORKDIR}/oemfs/grub.cfg"
+    echo 'set linux_append="$linux_append coreos.config.url=oem:///coreos-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
 
     umount "${WORKDIR}/oemfs"
     trap "error_output ; rm -rf '${WORKDIR}'" EXIT
