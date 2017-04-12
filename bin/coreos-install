@@ -33,10 +33,12 @@ fi
 BOARD=${BOARD:-"amd64-usr"}
 
 OEM_ID=
-if [[ -e /etc/oem-release ]]; then
-    # Pull in OEM information too, but prefixing variables with OEM_
-    eval "$(sed -e 's/^/OEM_/' /etc/oem-release)"
-fi
+for f in /usr/share/oem/oem-release /etc/oem-release; do
+    if [[ -e $f ]]; then
+        # Pull in OEM information too, but prefixing variables with OEM_
+        eval "$(sed -e 's/^/OEM_/' $f)"
+    fi
+done
 
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
@@ -304,7 +306,7 @@ do
         i) IGNITION="$OPTARG" ;;
         t) export TMPDIR="$OPTARG" ;;
         v) set -x ;;
-        b) BASE_URL="$OPTARG" ;;
+        b) BASE_URL="${OPTARG%/}" ;;
         n) COPY_NET=1;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
@@ -368,8 +370,13 @@ fi
 
 # if the version is "current", resolve the actual version number
 if [[ "${VERSION_ID}" == "current" ]]; then
-    VERSION_ID=$(wget --quiet -O - "${BASE_URL}/${VERSION_ID}/version.txt" | \
-        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }')
+    VERSIONTXT_URL="${BASE_URL}/${VERSION_ID}/version.txt"
+    VERSION_ID=$(wget --quiet -O - "${VERSIONTXT_URL}" | \
+        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }' ||:)
+    if [[ -z "${VERSION_ID}" ]]; then
+        echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
+        exit 1
+    fi
     echo "Current version of CoreOS ${CHANNEL_ID} is ${VERSION_ID}"
 fi
 
@@ -467,7 +474,7 @@ if [[ -n "${IGNITION}" ]]; then
 
     echo "Installing Ignition config ${IGNITION}..."
     cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
-    echo  "set linux_append=\"coreos.config.url=oem:///coreos-install.json\"" > "${WORKDIR}/oemfs/grub.cfg"
+    echo 'set linux_append="$linux_append coreos.config.url=oem:///coreos-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
 
     umount "${WORKDIR}/oemfs"
     trap "error_output ; rm -rf '${WORKDIR}'" EXIT
