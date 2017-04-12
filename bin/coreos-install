@@ -306,7 +306,7 @@ do
         i) IGNITION="$OPTARG" ;;
         t) export TMPDIR="$OPTARG" ;;
         v) set -x ;;
-        b) BASE_URL="$OPTARG" ;;
+        b) BASE_URL="${OPTARG%/}" ;;
         n) COPY_NET=1;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
