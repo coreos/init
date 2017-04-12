@@ -370,8 +370,13 @@ fi
 
 # if the version is "current", resolve the actual version number
 if [[ "${VERSION_ID}" == "current" ]]; then
-    VERSION_ID=$(wget --quiet -O - "${BASE_URL}/${VERSION_ID}/version.txt" | \
-        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }')
+    VERSIONTXT_URL="${BASE_URL}/${VERSION_ID}/version.txt"
+    VERSION_ID=$(wget --quiet -O - "${VERSIONTXT_URL}" | \
+        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }' ||:)
+    if [[ -z "${VERSION_ID}" ]]; then
+        echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
+        exit 1
+    fi
     echo "Current version of CoreOS ${CHANNEL_ID} is ${VERSION_ID}"
 fi
 
