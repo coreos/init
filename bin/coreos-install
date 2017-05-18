@@ -297,9 +297,9 @@ CLOUDINIT=""
 while getopts "V:B:C:d:o:c:i:t:b:nvh" OPTION
 do
     case $OPTION in
-        V) VERSION_ID="$OPTARG" ;;
+        V) VERSION_ID="$OPTARG"; VERSION_SPECIFIED=1 ;;
         B) BOARD="$OPTARG" ;;
-        C) CHANNEL_ID="$OPTARG" ;;
+        C) CHANNEL_ID="$OPTARG"; CHANNEL_SPECIFIED=1 ;;
         d) DEVICE="$OPTARG" ;;
         o) OEM_ID="$OPTARG" ;;
         c) CLOUDINIT="$OPTARG" ;;
@@ -312,6 +312,10 @@ do
         *) exit 1;;
     esac
 done
+
+if [[ -n "${CHANNEL_SPECIFIED}" && -z "${VERSION_SPECIFIED}" ]]; then
+    VERSION_ID="current"
+fi
 
 # Device is required, must not be a partition, must be writable
 if [[ -z "${DEVICE}" ]]; then
