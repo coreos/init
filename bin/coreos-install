@@ -42,9 +42,9 @@ done
 
 USAGE="Usage: $0 [-V version] [-d /dev/device]
 Options:
-    -d DEVICE   Install CoreOS to the given device.
+    -d DEVICE   Install Container Linux to the given device.
     -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
-    -B BOARD    CoreOS board to use [default: ${BOARD}]
+    -B BOARD    Container Linux board to use [default: ${BOARD}]
     -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}]
     -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
     -c CLOUD    Insert a cloud-init config to be executed on boot.
@@ -55,8 +55,8 @@ Options:
     -n          Copy generated network units to the root partition.
     -h          This ;-)
 
-This tool installs CoreOS on a block device. If you PXE booted CoreOS on a
-machine then use this tool to make a permanent install.
+This tool installs CoreOS Container Linux on a block device. If you PXE booted
+Container Linux on a machine then use this tool to make a permanent install.
 "
 
 # Image signing key:
@@ -297,9 +297,9 @@ CLOUDINIT=""
 while getopts "V:B:C:d:o:c:i:t:b:nvh" OPTION
 do
     case $OPTION in
-        V) VERSION_ID="$OPTARG" ;;
+        V) VERSION_ID="$OPTARG"; VERSION_SPECIFIED=1 ;;
         B) BOARD="$OPTARG" ;;
-        C) CHANNEL_ID="$OPTARG" ;;
+        C) CHANNEL_ID="$OPTARG"; CHANNEL_SPECIFIED=1 ;;
         d) DEVICE="$OPTARG" ;;
         o) OEM_ID="$OPTARG" ;;
         c) CLOUDINIT="$OPTARG" ;;
@@ -312,6 +312,10 @@ do
         *) exit 1;;
     esac
 done
+
+if [[ -n "${CHANNEL_SPECIFIED}" && -z "${VERSION_SPECIFIED}" ]]; then
+    VERSION_ID="current"
+fi
 
 # Device is required, must not be a partition, must be writable
 if [[ -z "${DEVICE}" ]]; then
@@ -377,7 +381,7 @@ if [[ "${VERSION_ID}" == "current" ]]; then
         echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
         exit 1
     fi
-    echo "Current version of CoreOS ${CHANNEL_ID} is ${VERSION_ID}"
+    echo "Current version of CoreOS Container Linux ${CHANNEL_ID} is ${VERSION_ID}"
 fi
 
 IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
@@ -483,4 +487,4 @@ fi
 rm -rf "${WORKDIR}"
 trap - EXIT
 
-echo "Success! CoreOS ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
+echo "Success! CoreOS Container Linux ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
