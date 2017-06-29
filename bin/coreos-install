@@ -46,6 +46,7 @@ Options:
     -i IGNITION Insert an Ignition config to be executed on boot.
     -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror (overrides BOARD)
+    -k KEYFILE  Override default GPG key for verifying image signature
     -n          Copy generated network units to the root partition.
     -h          This ;-)
 
@@ -311,9 +312,10 @@ tNPsShDTwMfzQ7k8ah9PXA==
 
 DEVICE=
 CLOUDINIT=
+KEYFILE=
 VERSION_SUMMARY='CoreOS Container Linux'
 
-while getopts "V:B:C:d:o:c:i:t:b:nvh" OPTION
+while getopts "V:B:C:d:o:c:i:t:b:k:nvh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG"; VERSION_SPECIFIED=1 ;;
@@ -326,6 +328,7 @@ do
         t) ;; # compatibility option; previously set TMPDIR
         v) set -x ;;
         b) BASE_URL="${OPTARG%/}" ;;
+        k) KEYFILE="$OPTARG" ;;
         n) COPY_NET=1;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
@@ -446,7 +449,11 @@ function install_from_url() {
     # Setup GnuPG for verifying the image signature
     export GNUPGHOME="${WORKDIR}/gnupg"
     mkdir -p "${GNUPGHOME}"
-    gpg --batch --quiet --import <<<"$GPG_KEY"
+    if [ -n "${KEYFILE}" ]; then
+        gpg --batch --quiet --import < "${KEYFILE}"
+    else
+        gpg --batch --quiet --import <<< "${GPG_KEY}"
+    fi
 
     echo "Downloading the signature for ${IMAGE_URL}..."
     wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
