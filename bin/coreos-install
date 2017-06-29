@@ -406,7 +406,11 @@ function install_from_file() {
         exit 1
     fi
 
-    write_to_disk < "${IMAGE_FILE}"
+    if [[ "${IMAGE_FILE}" =~ \.bz2$ ]]; then
+        bzip2 -cd "${IMAGE_FILE}" | write_to_disk
+    else
+        write_to_disk < "${IMAGE_FILE}"
+    fi
 
     VERSION_SUMMARY+=" (from ${IMAGE_FILE})"
 }
@@ -474,7 +478,7 @@ function install_from_url() {
 
     echo "Downloading, writing and verifying ${IMAGE_NAME}..."
     if ! wget --no-verbose -O - "${IMAGE_URL}" \
-        | tee >(bunzip2 --stdout >&3) \
+        | tee >(bzip2 -cd >&3) \
         | gpg --batch --trusted-key "${GPG_LONG_ID}" \
             --verify "${WORKDIR}/${SIG_NAME}" -
     then
