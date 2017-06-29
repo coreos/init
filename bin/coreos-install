@@ -47,6 +47,7 @@ Options:
     -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror (overrides BOARD)
     -k KEYFILE  Override default GPG key for verifying image signature
+    -f IMAGE    Install unverified local image file to disk instead of fetching
     -n          Copy generated network units to the root partition.
     -h          This ;-)
 
@@ -312,10 +313,11 @@ tNPsShDTwMfzQ7k8ah9PXA==
 
 DEVICE=
 CLOUDINIT=
+IMAGE_FILE=
 KEYFILE=
 VERSION_SUMMARY='CoreOS Container Linux'
 
-while getopts "V:B:C:d:o:c:i:t:b:k:nvh" OPTION
+while getopts "V:B:C:d:o:c:i:t:b:k:f:nvh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG"; VERSION_SPECIFIED=1 ;;
@@ -329,6 +331,7 @@ do
         v) set -x ;;
         b) BASE_URL="${OPTARG%/}" ;;
         k) KEYFILE="$OPTARG" ;;
+        f) IMAGE_FILE="$OPTARG" ;;
         n) COPY_NET=1;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
@@ -395,6 +398,17 @@ function write_to_disk() {
         echo "Failed to reread partitions on ${DEVICE}" >&2
     done
     [ -z "$try" ] || exit 1
+}
+
+function install_from_file() {
+    if ! [ -r "${IMAGE_FILE}" ]; then
+        echo "$0: Could not read image file: ${IMAGE_FILE}" >&2
+        exit 1
+    fi
+
+    write_to_disk < "${IMAGE_FILE}"
+
+    VERSION_SUMMARY+=" (from ${IMAGE_FILE})"
 }
 
 function install_from_url() {
@@ -516,7 +530,11 @@ fi
 WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
 trap 'error_output ; is_modified && wipefs --all --backup "${DEVICE}" ; rm -rf "${WORKDIR}"' EXIT
 
-install_from_url
+if [ -n "${IMAGE_FILE}" ]; then
+    install_from_file
+else
+    install_from_url
+fi
 write_cloudinit
 write_ignition
 
