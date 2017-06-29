@@ -9,10 +9,6 @@ error_output() {
     echo "Error: return code $? from $BASH_COMMAND" >&2
 }
 
-# Ensure that required executables exist before proceeding
-which wget >/dev/null || { echo 'Missing wget!' >&2 ; exit 1 ; }
-which gpg >/dev/null || { echo 'Missing gpg!' >&2 ; exit 1 ; }
-
 # Everything we do should be user-access only!
 umask 077
 
@@ -29,7 +25,6 @@ CHANNEL_ID=${GROUP:-stable}
 if [[ -e /usr/share/coreos/release ]]; then
     BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
 fi
-
 BOARD=${BOARD:-"amd64-usr"}
 
 OEM_ID=
@@ -314,8 +309,9 @@ tNPsShDTwMfzQ7k8ah9PXA==
 -----END PGP PUBLIC KEY BLOCK-----
 "
 
-DEVICE=""
-CLOUDINIT=""
+DEVICE=
+CLOUDINIT=
+VERSION_SUMMARY='CoreOS Container Linux'
 
 while getopts "V:B:C:d:o:c:i:t:b:nvh" OPTION
 do
@@ -335,10 +331,6 @@ do
         *) exit 1;;
     esac
 done
-
-if [[ -n "${CHANNEL_SPECIFIED}" && -z "${VERSION_SPECIFIED}" ]]; then
-    VERSION_ID="current"
-fi
 
 # Device is required, must not be a partition, must be writable
 if [[ -z "${DEVICE}" ]]; then
@@ -379,100 +371,113 @@ if [[ -n "${IGNITION}" ]]; then
     fi
 fi
 
-if [[ -n "${OEM_ID}" ]]; then
-    IMAGE_NAME="coreos_production_${OEM_ID}_image.bin.bz2"
-else
-    IMAGE_NAME="coreos_production_image.bin.bz2"
-fi
+function is_modified() [[ -e "${WORKDIR}/disk_modified" ]]
 
-# for compatibility with old versions that didn't support channels
-if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
-    CHANNEL_ID="${VERSION_ID}"
-    VERSION_ID="current"
-fi
+function write_to_disk() {
+    touch "${WORKDIR}/disk_modified"
 
-if [[ -z "${BASE_URL}" ]]; then
-    BASE_URL="https://${CHANNEL_ID}.release.core-os.net/${BOARD}"
-fi
+    # We are at the point of no return, so wipe disk labels missed below.
+    # In particular, ZFS writes labels in the last half-MiB of the disk.
+    dd conv=nocreat count=1024 if=/dev/zero of="${DEVICE}" \
+        seek=$(($(blockdev --getsz "${DEVICE}") - 1024)) status=none
 
-# if the version is "current", resolve the actual version number
-if [[ "${VERSION_ID}" == "current" ]]; then
-    VERSIONTXT_URL="${BASE_URL}/${VERSION_ID}/version.txt"
-    VERSION_ID=$(wget --quiet -O - "${VERSIONTXT_URL}" | \
-        gawk --field-separator '=' '/COREOS_VERSION=/ { print $2 }' ||:)
-    if [[ -z "${VERSION_ID}" ]]; then
-        echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
+    dd bs=1M conv=nocreat of="${DEVICE}" status=none
+
+    # inform the OS of partition table changes
+    udevadm settle
+    local try
+    for try in 0 1 2 4; do
+        sleep "$try"  # Give the device a bit more time on each attempt.
+        blockdev --rereadpt "${DEVICE}" && unset try && break ||
+        echo "Failed to reread partitions on ${DEVICE}" >&2
+    done
+    [ -z "$try" ] || exit 1
+}
+
+function install_from_url() {
+    # Ensure that required executables exist before proceeding
+    type -P wget >/dev/null || { echo 'Missing wget!' >&2 ; exit 1 ; }
+    type -P gpg >/dev/null || { echo 'Missing gpg!' >&2 ; exit 1 ; }
+
+    local IMAGE_NAME="coreos_production_image.bin.bz2"
+    if [[ -n "${OEM_ID}" ]]; then
+        IMAGE_NAME="coreos_production_${OEM_ID}_image.bin.bz2"
+    fi
+
+    if [[ -n "${CHANNEL_SPECIFIED-}" && -z "${VERSION_SPECIFIED-}" ]]; then
+        VERSION_ID=current
+    fi
+
+    # for compatibility with old versions that didn't support channels
+    if [[ "${VERSION_ID}" =~ ^(alpha|beta|stable)$ ]]; then
+        CHANNEL_ID="${VERSION_ID}"
+        VERSION_ID="current"
+    fi
+
+    if [[ -z "${BASE_URL}" ]]; then
+        BASE_URL="https://${CHANNEL_ID}.release.core-os.net/${BOARD}"
+    fi
+
+    # if the version is "current", resolve the actual version number
+    if [[ "${VERSION_ID}" == "current" ]]; then
+        local VERSIONTXT_URL="${BASE_URL}/${VERSION_ID}/version.txt"
+        VERSION_ID=$(wget -qO- "${VERSIONTXT_URL}" | sed -n 's/^COREOS_VERSION=//p')
+        if [[ -z "${VERSION_ID}" ]]; then
+            echo "$0: version.txt unavailable: ${VERSIONTXT_URL}" >&2
+            exit 1
+        fi
+        echo "Current version of CoreOS Container Linux ${CHANNEL_ID} is ${VERSION_ID}"
+    fi
+
+    local IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
+    local SIG_NAME="${IMAGE_NAME}.sig"
+    local SIG_URL="${BASE_URL}/${VERSION_ID}/${SIG_NAME}"
+
+    if ! wget --spider --quiet "${IMAGE_URL}"; then
+        echo "$0: Image URL unavailable: $IMAGE_URL" >&2
         exit 1
     fi
-    echo "Current version of CoreOS Container Linux ${CHANNEL_ID} is ${VERSION_ID}"
-fi
 
-IMAGE_URL="${BASE_URL}/${VERSION_ID}/${IMAGE_NAME}"
-SIG_NAME="${IMAGE_NAME}.sig"
-SIG_URL="${BASE_URL}/${VERSION_ID}/${SIG_NAME}"
+    if ! wget --spider --quiet "${SIG_URL}"; then
+        echo "$0: Image signature unavailable: $SIG_URL" >&2
+        exit 1
+    fi
 
-if ! wget --spider --quiet "${IMAGE_URL}"; then
-    echo "$0: Image URL unavailable: $IMAGE_URL" >&2
-    exit 1
-fi
+    # Setup GnuPG for verifying the image signature
+    export GNUPGHOME="${WORKDIR}/gnupg"
+    mkdir -p "${GNUPGHOME}"
+    gpg --batch --quiet --import <<<"$GPG_KEY"
 
-if ! wget --spider --quiet "${SIG_URL}"; then
-    echo "$0: Image signature unavailable: $SIG_URL" >&2
-    exit 1
-fi
+    echo "Downloading the signature for ${IMAGE_URL}..."
+    wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
 
-# Pre-flight checks pass, lets get this party started!
-WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
-trap "error_output ; rm -rf '${WORKDIR}'" EXIT
+    echo "Downloading, writing and verifying ${IMAGE_NAME}..."
+    if ! wget --no-verbose -O - "${IMAGE_URL}" \
+        | tee >(bunzip2 --stdout >&3) \
+        | gpg --batch --trusted-key "${GPG_LONG_ID}" \
+            --verify "${WORKDIR}/${SIG_NAME}" -
+    then
+        local EEND=( "${PIPESTATUS[@]}" )
+        [ ${EEND[0]} -ne 0 ] && echo "${EEND[0]}: Download of ${IMAGE_NAME} did not complete" >&2
+        [ ${EEND[1]} -ne 0 ] && echo "${EEND[1]}: Cannot expand ${IMAGE_NAME} to ${DEVICE}" >&2
+        [ ${EEND[2]} -ne 0 ] && echo "${EEND[2]}: GPG signature verification failed for ${IMAGE_NAME}" >&2
+        exit 1
+    fi 3> >(write_to_disk)
 
-# Setup GnuPG for verifying the image signature
-export GNUPGHOME="${WORKDIR}/gnupg"
-mkdir "${GNUPGHOME}"
-gpg --batch --quiet --import <<<"$GPG_KEY"
+    VERSION_SUMMARY+=" ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})}"
+}
 
-echo "Downloading the signature for ${IMAGE_URL}..."
-wget --no-verbose -O "${WORKDIR}/${SIG_NAME}" "${SIG_URL}"
-
-# We are at the point of no return, so wipe disk labels that are missed below.
-# In particular, ZFS writes labels in the last half-MiB of the disk.
-dd if=/dev/zero of="${DEVICE}" count=1024 2>/dev/null \
-    seek=$(($(blockdev --getsz "${DEVICE}") - 1024))
-
-echo "Downloading, writing and verifying ${IMAGE_NAME}..."
-declare -a EEND
-if ! wget --no-verbose -O - "${IMAGE_URL}" \
-    | tee >(bunzip2 --stdout >"${DEVICE}") \
-    | gpg --batch --trusted-key "${GPG_LONG_ID}" \
-        --verify "${WORKDIR}/${SIG_NAME}" -
-then
-    EEND=(${PIPESTATUS[@]})
-    [ ${EEND[0]} -ne 0 ] && echo "${EEND[0]}: Download of ${IMAGE_NAME} did not complete" >&2
-    [ ${EEND[1]} -ne 0 ] && echo "${EEND[1]}: Cannot expand ${IMAGE_NAME} to ${DEVICE}" >&2
-    [ ${EEND[2]} -ne 0 ] && echo "${EEND[2]}: GPG signature verification failed for ${IMAGE_NAME}" >&2
-    wipefs --all --backup "${DEVICE}"
-    exit 1
-fi
-
-# inform the OS of partition table changes
-udevadm settle
-for try in 0 1 2 4; do
-    sleep "$try"  # Give the device a bit more time on each attempt.
-    blockdev --rereadpt "${DEVICE}" && unset try && break ||
-    echo "Failed to reread partitions on ${DEVICE}" >&2
-done
-[ -z "$try" ] || exit 1
-
-if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
+function write_cloudinit() if [[ -n "${CLOUDINIT}${COPY_NET}" ]]; then
     # The ROOT partition should be #9 but make no assumptions here!
     # Also don't mount by label directly in case other devices conflict.
-    ROOT_DEV=$(blkid -t "LABEL=ROOT" -o device "${DEVICE}"*)
+    local ROOT_DEV=$(blkid -t "LABEL=ROOT" -o device "${DEVICE}"*)
 
     mkdir -p "${WORKDIR}/rootfs"
     case $(blkid -t "LABEL=ROOT" -o value -s TYPE "${ROOT_DEV}") in
       "btrfs") mount -t btrfs -o subvol=root "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
       *)       mount "${ROOT_DEV}" "${WORKDIR}/rootfs" ;;
     esac
-    trap "error_output ; umount '${WORKDIR}/rootfs' && rm -rf '${WORKDIR}'" EXIT
+    trap 'umount "${WORKDIR}/rootfs"' RETURN
 
     if [[ -n "${CLOUDINIT}" ]]; then
       echo "Installing cloud-config..."
@@ -485,29 +490,30 @@ if [[ -n "${CLOUDINIT}" ]] || [[ -n "${COPY_NET}" ]]; then
       # Copy the entire directory, do not overwrite anything that might exist there, keep permissions, and copy the resolve.conf link as a file.
       cp --recursive --no-clobber --preserve --dereference /run/systemd/network/* "${WORKDIR}/rootfs/etc/systemd/network"
     fi
-
-    umount "${WORKDIR}/rootfs"
-    trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 fi
 
-if [[ -n "${IGNITION}" ]]; then
+function write_ignition() if [[ -n "${IGNITION}" ]]; then
     # The OEM partition should be #6 but make no assumptions here!
     # Also don't mount by label directly in case other devices conflict.
-    OEM_DEV=$(blkid -t "LABEL=OEM" -o device "${DEVICE}"*)
+    local OEM_DEV=$(blkid -t "LABEL=OEM" -o device "${DEVICE}"*)
 
     mkdir -p "${WORKDIR}/oemfs"
     mount "${OEM_DEV}" "${WORKDIR}/oemfs"
-    trap "error_output ; umount '${WORKDIR}/oemfs' && rm -rf '${WORKDIR}'" EXIT
+    trap 'umount "${WORKDIR}/oemfs"' RETURN
 
     echo "Installing Ignition config ${IGNITION}..."
     cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
     echo 'set linux_append="$linux_append coreos.config.url=oem:///coreos-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
-
-    umount "${WORKDIR}/oemfs"
-    trap "error_output ; rm -rf '${WORKDIR}'" EXIT
 fi
+
+WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
+trap 'error_output ; is_modified && wipefs --all --backup "${DEVICE}" ; rm -rf "${WORKDIR}"' EXIT
+
+install_from_url
+write_cloudinit
+write_ignition
 
 rm -rf "${WORKDIR}"
 trap - EXIT
 
-echo "Success! CoreOS Container Linux ${CHANNEL_ID} ${VERSION_ID}${OEM_ID:+ (${OEM_ID})} is installed on ${DEVICE}"
+echo "Success! ${VERSION_SUMMARY} is installed on ${DEVICE}"
