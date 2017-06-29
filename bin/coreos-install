@@ -35,7 +35,7 @@ for f in /usr/share/oem/oem-release /etc/oem-release; do
     fi
 done
 
-USAGE="Usage: $0 [-V version] [-d /dev/device]
+USAGE="Usage: $0 [-C channel] -d /dev/device
 Options:
     -d DEVICE   Install Container Linux to the given device.
     -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
@@ -44,11 +44,11 @@ Options:
     -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
     -c CLOUD    Insert a cloud-init config to be executed on boot.
     -i IGNITION Insert an Ignition config to be executed on boot.
-    -v          Super verbose, for debugging.
     -b BASEURL  URL to the image mirror (overrides BOARD)
     -k KEYFILE  Override default GPG key for verifying image signature
     -f IMAGE    Install unverified local image file to disk instead of fetching
     -n          Copy generated network units to the root partition.
+    -v          Super verbose, for debugging.
     -h          This ;-)
 
 This tool installs CoreOS Container Linux on a block device. If you PXE booted
@@ -328,11 +328,11 @@ do
         c) CLOUDINIT="$OPTARG" ;;
         i) IGNITION="$OPTARG" ;;
         t) ;; # compatibility option; previously set TMPDIR
-        v) set -x ;;
         b) BASE_URL="${OPTARG%/}" ;;
         k) KEYFILE="$OPTARG" ;;
         f) IMAGE_FILE="$OPTARG" ;;
         n) COPY_NET=1;;
+        v) set -x ;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
