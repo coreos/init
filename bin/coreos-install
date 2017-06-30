@@ -9,6 +9,18 @@ error_output() {
     echo "Error: return code $? from $BASH_COMMAND" >&2
 }
 
+default_board() {
+    if [[ -e /usr/share/coreos/release ]]; then
+        gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release
+        return
+    fi
+
+    case "$(uname -m)" in
+    aarch64 ) echo "arm64-usr" ;;
+    * )       echo "amd64-usr" ;;
+    esac
+}
+
 # Everything we do should be user-access only!
 umask 077
 
@@ -22,10 +34,7 @@ fi
 : ${VERSION_ID:=current}
 CHANNEL_ID=${GROUP:-stable}
 
-if [[ -e /usr/share/coreos/release ]]; then
-    BOARD=$(gawk --field-separator '=' '/COREOS_RELEASE_BOARD=/ { print $2 }' /usr/share/coreos/release)
-fi
-BOARD=${BOARD:-"amd64-usr"}
+BOARD=$(default_board)
 
 OEM_ID=
 for f in /usr/share/oem/oem-release /etc/oem-release; do
