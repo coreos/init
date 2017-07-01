@@ -388,8 +388,15 @@ fi
 
 function is_modified() [[ -e "${WORKDIR}/disk_modified" ]]
 
+_disk_status=
+function wait_for_disk() {
+    [ -n "${_disk_status}" ] ||
+    read -rt 300 _disk_status <> "${WORKDIR}/disk_modified"
+}
+
 function write_to_disk() {
-    touch "${WORKDIR}/disk_modified"
+    mkfifo -m 0600 "${WORKDIR}/disk_modified"
+    trap '(exec 2>/dev/null ; echo done > "${WORKDIR}/disk_modified") &' RETURN
 
     # We are at the point of no return, so wipe disk labels missed below.
     # In particular, ZFS writes labels in the last half-MiB of the disk.
@@ -415,6 +422,7 @@ function install_from_file() {
         exit 1
     fi
 
+    echo "Writing ${IMAGE_FILE}..."
     if [[ "${IMAGE_FILE}" =~ \.bz2$ ]]; then
         bzip2 -cd "${IMAGE_FILE}" | write_to_disk
     else
@@ -548,6 +556,7 @@ if [ -n "${IMAGE_FILE}" ]; then
 else
     install_from_url
 fi
+wait_for_disk
 write_cloudinit
 write_ignition
 
