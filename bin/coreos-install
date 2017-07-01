@@ -413,6 +413,7 @@ function install_from_file() {
         exit 1
     fi
 
+    echo "Writing ${IMAGE_FILE}..."
     if [[ "${IMAGE_FILE}" =~ \.bz2$ ]]; then
         bzip2 -cd "${IMAGE_FILE}" | write_to_disk
     else
