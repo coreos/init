@@ -414,6 +414,7 @@ function write_to_disk() {
         echo "Failed to reread partitions on ${DEVICE}" >&2
     done
     [ -z "$try" ] || exit 1
+    udevadm settle
 }
 
 function install_from_file() {
