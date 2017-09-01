@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -eu
+
+NAME="init"
+ORG_PATH="github.com/coreos"
+REPO_PATH="${ORG_PATH}/${NAME}"
+
+if [ ! -h gopath/src/${REPO_PATH} ]; then
+        mkdir -p gopath/src/${ORG_PATH}
+        ln -s ../../../.. gopath/src/${REPO_PATH} || exit 255
+fi
+
+eval $(go env)
+
+export GOBIN=${PWD}/bin
+export GOPATH=${PWD}/gopath
+
+SRC=$(find . -name '*.go')
+
+PKG=$(cd gopath/src/${REPO_PATH}; go list ./...)
+
+PKG_VET=$(cd gopath/src/${REPO_PATH}; go list ./...) 
+
+echo "Checking gofix..."
+go tool fix -diff $SRC
+
+echo "Checking gofmt..."
+res=$(gofmt -d -e -s $SRC)
+echo "${res}"
+if [ -n "${res}" ]; then
+        exit 1
+fi
+
+echo "Checking govet..."
+go vet $PKG_VET
+
+echo "Running tests..."
+go test -timeout 9999s -cover $@ ${PKG} --race --test.v --coreos-install=${GOBIN}/coreos-install
+
+echo "Success"
