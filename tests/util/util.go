@@ -15,7 +15,14 @@
 package util
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -30,7 +37,7 @@ func RegexpSearch(t *testing.T, itemName, pattern string, data []byte) string {
 	return string(match[1])
 }
 
-func RegexpContains(t *testing.T, itemName, pattern string, data []byte) bool {
+func RegexpContains(t *testing.T, pattern string, data []byte) bool {
 	re := regexp.MustCompile(pattern)
 	match := re.FindSubmatch(data)
 	return len(match) > 0
@@ -58,6 +65,102 @@ func MustRun(t *testing.T, command string, opts ...string) []byte {
 	return out
 }
 
+func Run(t *testing.T, command string, opts ...string) error {
+	_, err := exec.Command(command, opts...).CombinedOutput()
+	return err
+}
+
 func StringToPtr(str string) *string {
 	return &str
+}
+
+func FetchLocalImage(t *testing.T) string {
+	tmpPath := os.Getenv("TMPDIR")
+	if tmpPath == "" {
+		tmpPath = "/var/tmp"
+	}
+
+	tmpDir, err := ioutil.TempDir(tmpPath, "")
+	if err != nil {
+		t.Fatalf("failed creating temp dir: %v", err)
+	}
+
+	err = DownloadFile(tmpDir, "coreos_production_image.bin.bz2")
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("failed downloading image: %v", err)
+	}
+
+	err = DownloadFile(tmpDir, "coreos_production_image.bin.bz2.sig")
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("failed downloading signature: %v", err)
+	}
+
+	err = DownloadFile(tmpDir, "version.txt")
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("failed downloading version: %v", err)
+	}
+
+	return tmpDir
+}
+
+func DownloadFile(tmpDir, name string) error {
+	file, err := os.Create(filepath.Join(tmpDir, name))
+	if err != nil {
+		return fmt.Errorf("failed to create file: %v", err)
+	}
+	defer file.Close()
+
+	resp, err := http.Get(fmt.Sprintf("https://stable.release.core-os.net/amd64-usr/current/%s", name))
+	if err != nil {
+		return fmt.Errorf("failed to download file: %v", err)
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed copying file data: %v", err)
+	}
+
+	return nil
+}
+
+type HTTPServer struct {
+	FileDir string
+}
+
+func (server *HTTPServer) Version(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(server.FileDir, "version.txt"))
+}
+
+func (server *HTTPServer) Image(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(server.FileDir, "coreos_production_image.bin.bz2"))
+}
+
+func (server *HTTPServer) Signature(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(server.FileDir, "coreos_production_image.bin.bz2.sig"))
+}
+
+func (server *HTTPServer) Start(t *testing.T) string {
+	http.HandleFunc("/current/version.txt", server.Version)
+
+	data, err := ioutil.ReadFile(filepath.Join(server.FileDir, "version.txt"))
+	if err != nil {
+		t.Fatalf("Couldn't read version.txt")
+	}
+	version := RegexpSearch(t, "version", "COREOS_VERSION=(.*)", data)
+
+	http.HandleFunc(fmt.Sprintf("/%s/coreos_production_image.bin.bz2", version), server.Image)
+	http.HandleFunc(fmt.Sprintf("/%s/coreos_production_image.bin.bz2.sig", version), server.Signature)
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("creating listener: %v", err)
+	}
+
+	go http.Serve(listener, nil)
+
+	return listener.Addr().String()
 }

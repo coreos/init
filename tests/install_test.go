@@ -17,9 +17,11 @@ package tests
 import (
 	"flag"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/coreos/init/tests/register"
+	"github.com/coreos/init/tests/util"
 
 	_ "github.com/coreos/init/tests/registry"
 )
@@ -36,9 +38,20 @@ func TestMain(m *testing.M) {
 }
 
 func TestCoreosInstall(t *testing.T) {
+	// download an image to speed up most tests
+	localImagePath := util.FetchLocalImage(t)
+	defer os.RemoveAll(localImagePath)
+
+	server := util.HTTPServer{
+		FileDir: localImagePath,
+	}
+	addr := server.Start(t)
+
 	for _, test := range register.Tests {
 		t.Run(test.Name, func(t *testing.T) {
 			test.BinaryPath = flagBinaryPath
+			test.LocalImagePath = filepath.Join(localImagePath, "coreos_production_image.bin.bz2")
+			test.LocalAddress = addr
 			test.Run(t)
 		})
 	}

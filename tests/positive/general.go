@@ -32,6 +32,7 @@ func init() {
 		IgnitionConfig: util.StringToPtr(`{
 			"ignition": {"version": "2.1.0"}
 		}`),
+		UseLocalServer: true,
 	})
 	register.Register(register.Test{
 		Name: "CloudConfig Test",
@@ -39,6 +40,7 @@ func init() {
 		CloudConfig: util.StringToPtr(`#cloud-config
 
 		hostname: "coreos1"`),
+		UseLocalServer: true,
 	})
 }
 
