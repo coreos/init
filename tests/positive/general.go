@@ -42,6 +42,29 @@ func init() {
 		hostname: "coreos1"`),
 		UseLocalServer: true,
 	})
+	register.Register(register.Test{
+		Name:    "Alpha 1520.0",
+		Func:    baseTest,
+		Channel: util.StringToPtr("alpha"),
+		Version: util.StringToPtr("1520.0.0"),
+	})
+	register.Register(register.Test{
+		Name:    "Channel Only",
+		Func:    baseTest,
+		Channel: util.StringToPtr("beta"),
+	})
+	register.Register(register.Test{
+		Name:    "arm64-usr alpha 1367.5.0",
+		Func:    baseTest,
+		Channel: util.StringToPtr("alpha"),
+		Version: util.StringToPtr("1367.5.0"),
+		Board:   util.StringToPtr("arm64-usr"),
+	})
+	register.Register(register.Test{
+		Name:    "Version Only",
+		Func:    baseTest,
+		Version: util.StringToPtr("1409.7.0"),
+	})
 }
 
 func baseTest(t *testing.T, test register.Test) {
