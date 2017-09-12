@@ -3,3 +3,5 @@ _trial_temp
 *.swp
 
 .idea/
+
+gopath/
