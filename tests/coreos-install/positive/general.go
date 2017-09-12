@@ -65,6 +65,36 @@ func init() {
 		Func:    baseTest,
 		Version: util.StringToPtr("1409.7.0"),
 	})
+	register.Register(register.Test{
+		Name: "OEM - ami",
+		Func: baseTest,
+		OEM:  util.StringToPtr("ami"),
+	})
+	register.Register(register.Test{
+		Name: "OEM - cloudstack",
+		Func: baseTest,
+		OEM:  util.StringToPtr("cloudstack"),
+	})
+	register.Register(register.Test{
+		Name: "OEM - digitalocean",
+		Func: baseTest,
+		OEM:  util.StringToPtr("digitalocean"),
+	})
+	register.Register(register.Test{
+		Name: "OEM - packet",
+		Func: baseTest,
+		OEM:  util.StringToPtr("packet"),
+	})
+	register.Register(register.Test{
+		Name: "OEM - rackspace",
+		Func: baseTest,
+		OEM:  util.StringToPtr("rackspace"),
+	})
+	register.Register(register.Test{
+		Name: "OEM - vmware_raw",
+		Func: baseTest,
+		OEM:  util.StringToPtr("vmware_raw"),
+	})
 }
 
 func baseTest(t *testing.T, test register.Test) {
