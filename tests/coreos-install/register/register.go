@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/coreos/init/tests/util"
+	"github.com/coreos/init/tests/coreos-install/util"
 )
 
 type Test struct {
