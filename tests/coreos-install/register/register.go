@@ -29,12 +29,9 @@ import (
 type Test struct {
 	Name           string
 	Func           func(*testing.T, Test)
-	BinaryPath     string
 	DiskSize       int64
 	IgnitionConfig *string
 	CloudConfig    *string
-	LocalImagePath string
-	LocalAddress   string
 	Version        *string
 	BaseURL        *string
 	Channel        *string
@@ -46,6 +43,15 @@ type Test struct {
 	// provide a regexp to validate the output
 	// of coreos-install
 	OutputRegexp string
+
+	// parameters provided by the test runner
+	Ctx Context
+}
+
+type Context struct {
+	BinaryPath     string
+	LocalImagePath string
+	LocalAddress   string
 }
 
 func (test Test) Run(t *testing.T) {
@@ -125,14 +131,14 @@ func (test Test) GetInstallOptions(t *testing.T, loopDevice string, opts ...stri
 	opts = append(opts, "-d", loopDevice)
 
 	if test.UseLocalServer {
-		opts = append(opts, "-b", test.LocalAddress)
+		opts = append(opts, "-b", test.Ctx.LocalAddress)
 	}
 
 	if test.UseLocalFile {
-		if test.LocalImagePath == "" {
+		if test.Ctx.LocalImagePath == "" {
 			t.Fatalf("test specifies using local file which doesn't exist")
 		}
-		opts = append(opts, "-f", test.LocalImagePath)
+		opts = append(opts, "-f", test.Ctx.LocalImagePath)
 	}
 
 	if test.Version != nil {
@@ -167,17 +173,17 @@ func (test Test) GetInstallOptions(t *testing.T, loopDevice string, opts ...stri
 func (test Test) RunCoreOSInstall(t *testing.T, loopDevice string, opts ...string) {
 	options := test.GetInstallOptions(t, loopDevice, opts...)
 
-	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
+	t.Logf("running: %s %s", test.Ctx.BinaryPath, strings.Join(options, " "))
 
-	util.MustRun(t, test.BinaryPath, options...)
+	util.MustRun(t, test.Ctx.BinaryPath, options...)
 }
 
 func (test Test) RunCoreOSInstallNegative(t *testing.T, loopDevice string, opts ...string) ([]byte, error) {
 	options := test.GetInstallOptions(t, loopDevice, opts...)
 
-	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
+	t.Logf("running: %s %s", test.Ctx.BinaryPath, strings.Join(options, " "))
 
-	return exec.Command(test.BinaryPath, options...).CombinedOutput()
+	return exec.Command(test.Ctx.BinaryPath, options...).CombinedOutput()
 }
 
 func (test Test) RemoveAll(t *testing.T, path string) {

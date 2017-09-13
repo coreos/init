@@ -47,11 +47,15 @@ func TestCoreosInstall(t *testing.T) {
 	}
 	addr := server.Start(t)
 
+	ctx := register.Context{
+		BinaryPath:     flagBinaryPath,
+		LocalImagePath: filepath.Join(localImagePath, "coreos_production_image.bin.bz2"),
+		LocalAddress:   addr,
+	}
+
 	for _, test := range register.Tests {
 		t.Run(test.Name, func(t *testing.T) {
-			test.BinaryPath = flagBinaryPath
-			test.LocalImagePath = filepath.Join(localImagePath, "coreos_production_image.bin.bz2")
-			test.LocalAddress = addr
+			test.Ctx = ctx
 			test.Run(t)
 		})
 	}
