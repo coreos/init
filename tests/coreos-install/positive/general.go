@@ -17,8 +17,8 @@ package positive
 import (
 	"testing"
 
-	"github.com/coreos/init/tests/register"
-	"github.com/coreos/init/tests/util"
+	"github.com/coreos/init/tests/coreos-install/register"
+	"github.com/coreos/init/tests/coreos-install/util"
 )
 
 func init() {
