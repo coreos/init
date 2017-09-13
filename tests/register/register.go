@@ -41,6 +41,11 @@ type Test struct {
 	Board          *string
 	UseLocalFile   bool
 	UseLocalServer bool
+
+	// used in negative tests to allow them to
+	// provide a regexp to validate the output
+	// of coreos-install
+	OutputRegexp string
 }
 
 func (test Test) Run(t *testing.T) {
@@ -165,6 +170,14 @@ func (test Test) RunCoreOSInstall(t *testing.T, loopDevice string, opts ...strin
 	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
 
 	util.MustRun(t, test.BinaryPath, options...)
+}
+
+func (test Test) RunCoreOSInstallNegative(t *testing.T, loopDevice string, opts ...string) ([]byte, error) {
+	options := test.GetInstallOptions(t, loopDevice, opts...)
+
+	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
+
+	return exec.Command(test.BinaryPath, options...).CombinedOutput()
 }
 
 func (test Test) RemoveAll(t *testing.T, path string) {
