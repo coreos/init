@@ -15,5 +15,6 @@
 package registry
 
 import (
+	_ "github.com/coreos/init/tests/negative"
 	_ "github.com/coreos/init/tests/positive"
 )

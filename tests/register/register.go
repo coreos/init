@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -32,6 +33,19 @@ type Test struct {
 	DiskSize       int64
 	IgnitionConfig *string
 	CloudConfig    *string
+	LocalImagePath string
+	LocalAddress   string
+	Version        *string
+	BaseURL        *string
+	Channel        *string
+	Board          *string
+	UseLocalFile   bool
+	UseLocalServer bool
+
+	// used in negative tests to allow them to
+	// provide a regexp to validate the output
+	// of coreos-install
+	OutputRegexp string
 }
 
 func (test Test) Run(t *testing.T) {
@@ -107,8 +121,35 @@ func (test Test) UnmountPartitions(t *testing.T, loopDevice string) {
 	util.MustRun(t, "umount", fmt.Sprintf("%sp9", loopDevice))
 }
 
-func (test Test) RunCoreOSInstall(t *testing.T, loopDevice string, opts ...string) {
+func (test Test) GetInstallOptions(t *testing.T, loopDevice string, opts ...string) []string {
 	opts = append(opts, "-d", loopDevice)
+
+	if test.UseLocalServer {
+		opts = append(opts, "-b", test.LocalAddress)
+	}
+
+	if test.UseLocalFile {
+		if test.LocalImagePath == "" {
+			t.Fatalf("test specifies using local file which doesn't exist")
+		}
+		opts = append(opts, "-f", test.LocalImagePath)
+	}
+
+	if test.Version != nil {
+		opts = append(opts, "-V", *test.Version)
+	}
+
+	if test.BaseURL != nil {
+		opts = append(opts, "-b", *test.BaseURL)
+	}
+
+	if test.Channel != nil {
+		opts = append(opts, "-C", *test.Channel)
+	}
+
+	if test.Board != nil {
+		opts = append(opts, "-B", *test.Board)
+	}
 
 	if test.IgnitionConfig != nil {
 		ignitionPath := test.WriteFile(t, "coreos-ignition-file", *test.IgnitionConfig)
@@ -120,7 +161,23 @@ func (test Test) RunCoreOSInstall(t *testing.T, loopDevice string, opts ...strin
 		opts = append(opts, "-c", cloudinitPath)
 	}
 
-	util.MustRun(t, test.BinaryPath, opts...)
+	return opts
+}
+
+func (test Test) RunCoreOSInstall(t *testing.T, loopDevice string, opts ...string) {
+	options := test.GetInstallOptions(t, loopDevice, opts...)
+
+	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
+
+	util.MustRun(t, test.BinaryPath, options...)
+}
+
+func (test Test) RunCoreOSInstallNegative(t *testing.T, loopDevice string, opts ...string) ([]byte, error) {
+	options := test.GetInstallOptions(t, loopDevice, opts...)
+
+	t.Logf("running: %s %s", test.BinaryPath, strings.Join(options, " "))
+
+	return exec.Command(test.BinaryPath, options...).CombinedOutput()
 }
 
 func (test Test) RemoveAll(t *testing.T, path string) {
@@ -166,7 +223,9 @@ func (test Test) ValidateIgnition(t *testing.T, rootDir, config string) {
 		t.Fatalf("reading grub.cfg: %v", err)
 	}
 
-	util.RegexpContains(t, "ignition grub.cfg info", "coreos.config.url=oem:///coreos-install.json", data)
+	if !util.RegexpContains(t, "coreos.config.url=oem:///coreos-install.json", data) {
+		t.Fatalf("grub.cfg doesn't contain a reference to coreos-install.json: %s", data)
+	}
 }
 
 func (test Test) ValidateCloudConfig(t *testing.T, rootDir, config string) {
@@ -183,10 +242,39 @@ func (test Test) ValidateCloudConfig(t *testing.T, rootDir, config string) {
 }
 
 func (test Test) ValidateOSRelease(t *testing.T, rootDir string) {
-	if _, err := os.Stat(filepath.Join(rootDir, "usr", "lib", "os-release")); os.IsNotExist(err) {
+	data, err := ioutil.ReadFile(filepath.Join(rootDir, "usr", "lib", "os-release"))
+	if os.IsNotExist(err) {
 		t.Fatalf("/usr/lib/os-release was not found")
 	} else if err != nil {
-		t.Fatalf("running stat on /usr/lib/os-release: %v", err)
+		t.Fatalf("reading /usr/lib/os-release: %v", err)
+	}
+
+	if test.Version != nil && *test.Version != util.RegexpSearch(t, "version", "VERSION_ID=(.*)", data) {
+		t.Fatalf("expected version differs: expected: %s, received: %s", *test.Version, data)
+	}
+
+	if test.Board != nil && *test.Board != util.RegexpSearch(t, "board", "COREOS_BOARD=\"(.*)\"", data) {
+		t.Fatalf("expected board differs: expected %s, received: %s", *test.Board, data)
+	}
+}
+
+func (test Test) ValidateChannel(t *testing.T, rootDir string) {
+	data, err := ioutil.ReadFile(filepath.Join(rootDir, "etc", "coreos", "update.conf"))
+	if err != nil {
+		t.Fatalf("reading /etc/coreos/update.conf: %v", err)
+	}
+
+	if *test.Channel != util.RegexpSearch(t, "channel", "GROUP=(.*)", data) {
+		t.Fatalf("expected channel differs: expected %s, received %s", *test.Channel, data)
+	}
+}
+
+func (test Test) ValidatePartitionTableWiped(t *testing.T, diskFile string) {
+	partitionTable := util.Run(t, "blkid", diskFile)
+
+	// after a wipe blkid will exit with the error "exit status 1" with no output
+	if partitionTable == nil {
+		t.Fatalf("partition table was not wiped")
 	}
 }
 
@@ -199,6 +287,10 @@ func (test Test) DefaultChecks(t *testing.T, rootDir string) {
 
 	if test.CloudConfig != nil {
 		test.ValidateCloudConfig(t, rootDir, *test.CloudConfig)
+	}
+
+	if test.Channel != nil {
+		test.ValidateChannel(t, rootDir)
 	}
 }
 
