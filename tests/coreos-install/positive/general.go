@@ -39,7 +39,7 @@ func init() {
 		Func: baseTest,
 		CloudConfig: util.StringToPtr(`#cloud-config
 
-		hostname: "coreos1"`),
+hostname: "coreos1"`),
 		UseLocalServer: true,
 	})
 	register.Register(register.Test{
