@@ -44,6 +44,7 @@ type Test struct {
 	UseLocalFile   bool
 	UseLocalServer bool
 	OEM            *string
+	NetworkUnits   bool
 
 	// used in negative tests to allow them to
 	// provide a regexp to validate the output
@@ -165,6 +166,10 @@ func (test Test) GetInstallOptions(t *testing.T, loopDevice string, opts ...stri
 
 	if test.OEM != nil {
 		opts = append(opts, "-o", *test.OEM)
+	}
+
+	if test.NetworkUnits {
+		opts = append(opts, "-n")
 	}
 
 	if test.IgnitionConfig != nil {
@@ -312,6 +317,31 @@ func (test Test) ValidateOEM(t *testing.T, rootDir string) {
 	}
 }
 
+func (test Test) ValidateNetworkUnits(t *testing.T, rootDir string) {
+	files, err := ioutil.ReadDir("/run/systemd/network")
+	if err != nil {
+		t.Fatalf("reading /run/systemd/network: %v", err)
+	}
+
+	for _, file := range files {
+		path := filepath.Join("/run/systemd/network", file.Name())
+		expectedData, err := ioutil.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading %s: %v", path, err)
+		}
+
+		tmpPath := filepath.Join(rootDir, "etc", "systemd", "network", file.Name())
+		data, err := ioutil.ReadFile(tmpPath)
+		if err != nil {
+			t.Fatalf("reading %s: %v", tmpPath, err)
+		}
+
+		if string(expectedData) != string(data) {
+			t.Fatalf("%s does not match: expected %s, received %s", file.Name(), expectedData, data)
+		}
+	}
+}
+
 func (test Test) DefaultChecks(t *testing.T, rootDir string) {
 	test.ValidateOSRelease(t, rootDir)
 
@@ -329,6 +359,10 @@ func (test Test) DefaultChecks(t *testing.T, rootDir string) {
 
 	if test.OEM != nil {
 		test.ValidateOEM(t, rootDir)
+	}
+
+	if test.NetworkUnits {
+		test.ValidateNetworkUnits(t, rootDir)
 	}
 }
 

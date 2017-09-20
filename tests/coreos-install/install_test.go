@@ -53,6 +53,11 @@ func TestCoreosInstall(t *testing.T) {
 		LocalAddress:   addr,
 	}
 
+	networkUnit := util.CreateNetworkUnit(t)
+	if networkUnit != "" {
+		defer os.RemoveAll(networkUnit)
+	}
+
 	for _, test := range register.Tests {
 		t.Run(test.Name, func(t *testing.T) {
 			test.Ctx = ctx

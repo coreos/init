@@ -94,6 +94,12 @@ func init() {
 		Func: baseTest,
 		OEM:  util.StringToPtr("vmware_raw"),
 	})
+	register.Register(register.Test{
+		Name:           "Network Units Test",
+		Func:           baseTest,
+		UseLocalServer: true,
+		NetworkUnits:   true,
+	})
 }
 
 // used by tests which want to test versions without pinning

@@ -177,6 +177,45 @@ func DownloadFile(tmpDir, name string) error {
 	return nil
 }
 
+// used to create a file in /run/systemd/network on the host machine if no
+// files are present for use in network unit testing
+func CreateNetworkUnit(t *testing.T) string {
+	var ret string
+	if _, err := os.Stat("/run/systemd/network"); os.IsNotExist(err) {
+		err = os.MkdirAll("/run/systemd/network", 0777)
+		if err != nil {
+			t.Fatalf("creating /run/systemd/network: %v", err)
+		}
+		ret = "/run/systemd/network"
+	} else {
+		files, err := ioutil.ReadDir("/run/systemd/network")
+		if err == nil && len(files) > 0 {
+			// a network unit already exists
+			return ""
+		}
+	}
+
+	// no existing network files exist, write a valid .network file
+	// which performs a no-op
+	file, err := os.Create("/run/systemd/network/coreos-install-test.network")
+	if err != nil {
+		t.Fatalf("creating network unit: %v", err)
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(`# Created by coreos-install tests
+[Match]
+Architecture=coreos-install`)
+	if err != nil {
+		t.Fatalf("writing data to network unit: %v", err)
+	}
+	if ret == "" {
+		ret = file.Name()
+	}
+
+	return ret
+}
+
 type HTTPServer struct {
 	FileDir string
 }
