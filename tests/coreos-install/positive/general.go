@@ -39,7 +39,7 @@ func init() {
 		Func: baseTest,
 		CloudConfig: util.StringToPtr(`#cloud-config
 
-		hostname: "coreos1"`),
+hostname: "coreos1"`),
 		UseLocalServer: true,
 	})
 	register.Register(register.Test{
@@ -61,9 +61,8 @@ func init() {
 		Board:   util.StringToPtr("arm64-usr"),
 	})
 	register.Register(register.Test{
-		Name:    "Version Only",
-		Func:    baseTest,
-		Version: util.StringToPtr("1409.7.0"),
+		Name: "Version Only",
+		Func: pickVersion,
 	})
 	register.Register(register.Test{
 		Name: "OEM - ami",
@@ -95,6 +94,38 @@ func init() {
 		Func: baseTest,
 		OEM:  util.StringToPtr("vmware_raw"),
 	})
+	register.Register(register.Test{
+		Name:           "Network Units Test",
+		Func:           baseTest,
+		UseLocalServer: true,
+		NetworkUnits:   true,
+	})
+}
+
+// used by tests which want to test versions without pinning
+// a specific channel as on Container Linux machines the
+// channel will default to the host machines channel.
+//
+// Will update the test.Version flag with the selected Version
+func pickVersion(t *testing.T, test register.Test) {
+	pinnedVersions := map[string]string{
+		"alpha":  "1535.0.0",
+		"beta":   "1520.3.0",
+		"stable": "1465.7.0",
+	}
+
+	channel, _, _, err := util.GetDefaultChannelBoardVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if version, ok := pinnedVersions[channel]; ok {
+		test.Version = util.StringToPtr(version)
+	} else {
+		t.Fatalf("unknown channel %s", channel)
+	}
+
+	baseTest(t, test)
 }
 
 func baseTest(t *testing.T, test register.Test) {
