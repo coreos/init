@@ -1,10 +1,11 @@
 [Unit]
 Description=Boot partition
 DefaultDependencies=no
+Requires=systemd-fsck@dev-disk-by\x2dlabel-EFI\x2dSYSTEM.service
+After=systemd-fsck@dev-disk-by\x2dlabel-EFI\x2dSYSTEM.service
 ConditionVirtualization=!container
 ConditionPathExists=!/usr/.noupdate
 
 [Mount]
 What=/dev/disk/by-label/EFI-SYSTEM
 Where=/boot
-

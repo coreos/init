@@ -4,6 +4,8 @@ Wants=addon-run@usr-share-oem.service addon-config@usr-share-oem.service
 Before=addon-run@usr-share-oem.service addon-config@usr-share-oem.service
 Conflicts=umount.target
 Before=local-fs.target umount.target ldconfig.service
+Requires=systemd-fsck@dev-disk-by\x2dlabel-OEM.service
+After=systemd-fsck@dev-disk-by\x2dlabel-OEM.service
 ConditionVirtualization=!container
 ConditionPathExists=!/usr/.noupdate
 
