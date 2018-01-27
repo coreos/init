@@ -391,7 +391,7 @@ function is_modified() [[ -e "${WORKDIR}/disk_modified" ]]
 _disk_status=
 function wait_for_disk() {
     [ -n "${_disk_status}" ] ||
-    read -rt 300 _disk_status <> "${WORKDIR}/disk_modified"
+    read -rt 7200 _disk_status <> "${WORKDIR}/disk_modified"
 }
 
 function write_to_disk() {
