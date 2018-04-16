@@ -44,21 +44,21 @@ for f in /usr/share/oem/oem-release /etc/oem-release; do
     fi
 done
 
-USAGE="Usage: $0 [-C channel] -d /dev/device
+USAGE="Usage: $0 -d <device> [options]
 Options:
     -d DEVICE   Install Container Linux to the given device.
-    -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}]
-    -B BOARD    Container Linux board to use [default: ${BOARD}]
-    -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}]
-    -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}]
+    -V VERSION  Version to install (e.g. current) [default: ${VERSION_ID}].
+    -B BOARD    Container Linux board to use [default: ${BOARD}].
+    -C CHANNEL  Release channel to use (e.g. beta) [default: ${CHANNEL_ID}].
+    -o OEM      OEM type to install (e.g. ami) [default: ${OEM_ID:-(none)}].
     -c CLOUD    Insert a cloud-init config to be executed on boot.
     -i IGNITION Insert an Ignition config to be executed on boot.
-    -b BASEURL  URL to the image mirror (overrides BOARD)
-    -k KEYFILE  Override default GPG key for verifying image signature
-    -f IMAGE    Install unverified local image file to disk instead of fetching
+    -b BASEURL  URL to the image mirror (overrides BOARD).
+    -k KEYFILE  Override default GPG key for verifying image signature.
+    -f IMAGE    Install unverified local image file to disk instead of fetching.
     -n          Copy generated network units to the root partition.
     -v          Super verbose, for debugging.
-    -h          This ;-)
+    -h          This ;-).
 
 This tool installs CoreOS Container Linux on a block device. If you PXE booted
 Container Linux on a machine then use this tool to make a permanent install.
@@ -388,6 +388,7 @@ done
 # Device is required, must not be a partition, must be writable
 if [[ -z "${DEVICE}" ]]; then
     echo "$0: No target block device provided, -d is required." >&2
+    echo "$USAGE" >&2
     exit 1
 fi
 
