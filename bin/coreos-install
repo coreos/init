@@ -57,6 +57,7 @@ Options:
     -k KEYFILE  Override default GPG key for verifying image signature.
     -f IMAGE    Install unverified local image file to disk instead of fetching.
     -n          Copy generated network units to the root partition.
+    -y          Dry-run.  Run some checks and print option settings.
     -v          Super verbose, for debugging.
     -h          This ;-).
 
@@ -364,7 +365,7 @@ IMAGE_FILE=
 KEYFILE=
 VERSION_SUMMARY='CoreOS Container Linux'
 
-while getopts "V:B:C:d:o:c:i:t:b:k:f:nvh" OPTION
+while getopts "V:B:C:d:o:c:i:t:b:k:f:nyvh" OPTION
 do
     case $OPTION in
         V) VERSION_ID="$OPTARG"; VERSION_SPECIFIED=1 ;;
@@ -379,11 +380,26 @@ do
         k) KEYFILE="$OPTARG" ;;
         f) IMAGE_FILE="$OPTARG" ;;
         n) COPY_NET=1;;
+        y) DRY_RUN=1 ;;
         v) set -x ;;
         h) echo "$USAGE"; exit;;
         *) exit 1;;
     esac
 done
+
+function print_settings() {
+    echo "\
+Settings:
+    VERSION:  ${VERSION_ID}
+    BOARD:    ${BOARD}
+    CHANNEL:  ${CHANNEL_ID}
+    OEM:      ${OEM_ID:-(none)}
+    CLOUD:    ${CLOUDINIT:-(none)}
+    IGNITION: ${IGNITION:-(none)}
+    BASEURL:  ${BASE_URL:-(none)}
+    KEYFILE:  ${KEYFILE:-(none)}
+    IMAGE:    ${IMAGE_FILE:-(none)}"
+}
 
 # Device is required, must not be a partition, must be writable
 if [[ -z "${DEVICE}" ]]; then
@@ -423,6 +439,11 @@ if [[ -n "${IGNITION}" ]]; then
         echo "$0: Ignition config file (${IGNITION}) does not exist." >&2
         exit 1
     fi
+fi
+
+if [[ -n "${DRY_RUN}" ]]; then
+    print_settings
+    exit 0
 fi
 
 function is_modified() [[ -e "${WORKDIR}/disk_modified" ]]
