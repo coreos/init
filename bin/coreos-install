@@ -605,8 +605,7 @@ function write_ignition() if [[ -n "${IGNITION}" ]]; then
     trap 'umount "${WORKDIR}/oemfs"' RETURN
 
     echo "Installing Ignition config ${IGNITION}..."
-    cp "${IGNITION}" "${WORKDIR}/oemfs/coreos-install.json"
-    echo 'set linux_append="$linux_append coreos.config.url=oem:///coreos-install.json"' >> "${WORKDIR}/oemfs/grub.cfg"
+    cp "${IGNITION}" "${WORKDIR}/oemfs/config.ign"
 fi
 
 WORKDIR=$(mktemp --tmpdir -d coreos-install.XXXXXXXXXX)
