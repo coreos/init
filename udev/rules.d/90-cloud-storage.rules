@@ -9,6 +9,16 @@ KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="PersistentDisk", EN
 KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="EphemeralDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
 KERNEL=="sd*|vd*", ENV{ID_VENDOR}=="Google", ENV{ID_MODEL}=="EphemeralDisk", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
 
+## AWS EBS NVMe names
+## https://github.com/coreos/bugs/issues/2399
+# NVMe devices
+KERNEL=="nvme[0-9]*n[0-9]*", ENV{DEVTYPE}=="disk", ATTRS{model}=="Amazon Elastic Block Store", ATTRS{serial}=="?*", SYMLINK+="disk/by-id/nvme-$attr{model}_$attr{serial}-ns-%n", OPTIONS+="string_escape=replace"
+KERNEL=="nvme[0-9]*n[0-9]*", ENV{DEVTYPE}=="disk", ATTRS{model}=="Amazon Elastic Block Store", ATTRS{serial}=="?*", PROGRAM="cloud_aws_ebs_nvme_id -d /dev/%k", SYMLINK+="%c"
+# NVMe partitions
+KERNEL=="nvme[0-9]*n[0-9]*p[0-9]*", ENV{DEVTYPE}=="partition", ATTRS{model}=="Amazon Elastic Block Store", ATTRS{serial}=="?*", IMPORT{program}="cloud_aws_ebs_nvme_id -n /dev/%k"
+KERNEL=="nvme[0-9]*n[0-9]*p[0-9]*", ENV{DEVTYPE}=="partition", ATTRS{model}=="Amazon Elastic Block Store", ATTRS{serial}=="?*", ENV{_NS_ID}=="?*", SYMLINK+="disk/by-id/nvme-$attr{model}_$attr{serial}-ns-$env{_NS_ID}-part%n", OPTIONS+="string_escape=replace"
+KERNEL=="nvme[0-9]*n[0-9]*p[0-9]*", ENV{DEVTYPE}=="partition", ATTRS{model}=="Amazon Elastic Block Store", ATTRS{serial}=="?*", ENV{_NS_ID}=="?*", PROGRAM="cloud_aws_ebs_nvme_id -d /dev/%k", SYMLINK+="%c%n"
+
 # TODO: Anyone else support friendly names?
 
 LABEL="cloud_storage_end"
