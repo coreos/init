@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 usage() {
-    echo "Usage: $0 [-d|-p|-h] <device>" 1>&2
+    echo "Usage: $0 [-d|-n|-h] <device>" 1>&2
 }
 
 # Get partition ID from device name, e.g. '/dev/nvme0n1p2' -> '1'
