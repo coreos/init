@@ -12,6 +12,7 @@ source /usr/lib/os-release
 
 mkdir -p /run/coreos
 echo -e "\e[${ANSI_COLOR}m${NAME}\e[39m ${GROUP} (${VERSION})" > /run/coreos/motd
+echo -e '\n\e[31;1mCoreOS Container Linux will no longer receive updates after May 26, 2020.\nBegin migrating your workloads to another operating system.\nFor more info, see https://coreos.com/os/eol/\e[0m\n' >> /run/coreos/motd
 
 if [[ -d "/etc/motd.d" ]]; then
 	cat /etc/motd.d/*.conf 2>/dev/null >> /run/coreos/motd || true

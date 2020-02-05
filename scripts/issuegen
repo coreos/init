@@ -9,6 +9,7 @@ print_issue() {
         [ -f "${note}" ] && cat "${note}"
     done
     echo
+    echo -e '\e[31;1mCoreOS Container Linux will no longer receive updates after May 26, 2020.\nSee https://coreos.com/os/eol/\e[0m\n'
 }
 
 case "$1" in
